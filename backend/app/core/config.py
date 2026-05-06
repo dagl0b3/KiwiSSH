@@ -19,6 +19,37 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+SUPPORTED_PROTOCOLS = {"ssh", "telnet"}
+
+
+def _normalize_protocol(value: str | None, *, allow_none: bool) -> str | None:
+    """Normalize protocol value.
+
+    Args:
+        value (str | None): The protocol value to normalize
+        allow_none (bool): True if None is an acceptable value, e.g. if no protocol override for GroupConfig / NodeConfig
+
+    Raises:
+        ValueError: If the protocol value is not supported / empty
+
+    Returns:
+        str | None: The normalized protocol value
+    """
+    if value is None:
+        return None if allow_none else "ssh"
+
+    text = str(value).strip().lower()
+    if not text:
+        if allow_none:
+            return None
+        raise ValueError("protocol must be 'ssh' or 'telnet'")
+
+    if text not in SUPPORTED_PROTOCOLS:
+        raise ValueError("protocol must be 'ssh' or 'telnet'")
+    return text
+
+
+### =====================================================================
 
 class ApiConfig(BaseModel):
     """API server configuration."""
@@ -88,8 +119,16 @@ class AppConfig(BaseModel):
     threads: int = Field(default=20, ge=1)
     timeout: int = Field(default=30, ge=1)
     retry: int = Field(default=3, ge=0)
+    protocol: str = "ssh"
     api: ApiConfig = Field(default_factory=ApiConfig)
     schedule: ScheduleConfig = Field(default_factory=ScheduleConfig)
+
+    @field_validator("protocol", mode="before")
+    @classmethod
+    def validate_protocol(cls, value: str) -> str:
+        """Validate default protocol setting."""
+        normalized = _normalize_protocol(value, allow_none=False)
+        return "ssh" if normalized is None else normalized
 
 
 class GroupGitRemoteConfig(BaseModel):
@@ -202,6 +241,7 @@ class GroupConfig(BaseModel):
     enable_password: str | None = None
     ssh_key_file: str | None = None
     port: int | None = Field(default=None, ge=1, le=65535)
+    protocol: str | None = None
     vendor: str
     jumphost: GroupJumphostConfig | None = None
     timeout: int | None = Field(default=None, ge=1)
@@ -248,6 +288,12 @@ class GroupConfig(BaseModel):
         if not text:
             raise ValueError("Vendor must be a non-empty string")
         return text
+
+    @field_validator("protocol", mode="before")
+    @classmethod
+    def validate_protocol(cls, value: str | None) -> str | None:
+        """Normalize optional protocol override."""
+        return _normalize_protocol(value, allow_none=True)
     
     @field_validator("password", mode="before")
     @classmethod
@@ -276,6 +322,7 @@ class NodeConfig(BaseModel):
     ssh_key_file: str | None = None
     ssh_profile: str | None = None
     port: int | None = Field(default=None, ge=1, le=65535)
+    protocol: str | None = None
     vendor: str | None = None
     jumphost: NodeJumphostConfig | None = None
     timeout: int | None = Field(default=None, ge=1)
@@ -331,6 +378,12 @@ class NodeConfig(BaseModel):
         if not text:
             raise ValueError("Vendor must be a non-empty string when provided")
         return text
+
+    @field_validator("protocol", mode="before")
+    @classmethod
+    def validate_protocol(cls, value: str | None) -> str | None:
+        """Normalize optional protocol override."""
+        return _normalize_protocol(value, allow_none=True)
 
 
 class PostgresSourceConfig(BaseModel):
@@ -653,7 +706,9 @@ class Settings(BaseSettings):
             "retry": self.app.retry,
             "schedule": self.app.schedule,
             "jumphost": None,
+            "protocol": self.app.protocol,
         }
+        port_is_default = True
 
         ### Step 1: Apply group-level defaults / overrides
         if group in self.groups:
@@ -687,6 +742,9 @@ class Settings(BaseSettings):
                 device_config["schedule"] = group_config.schedule
             if group_config.port is not None:
                 device_config["port"] = group_config.port
+                port_is_default = False
+            if group_config.protocol is not None:
+                device_config["protocol"] = group_config.protocol
 
         ### Step 2: Apply node-specific overrides
         ### NOTE: Group cannot be overridden here - must be changed in source
@@ -696,6 +754,9 @@ class Settings(BaseSettings):
                 device_config["ssh_profile"] = node_config.ssh_profile
             if node_config.port is not None:
                 device_config["port"] = node_config.port
+                port_is_default = False
+            if node_config.protocol is not None:
+                device_config["protocol"] = node_config.protocol
             if node_config.vendor is not None:
                 device_config["vendor"] = node_config.vendor
             if node_config.timeout is not None:
@@ -733,13 +794,37 @@ class Settings(BaseSettings):
                 device_config["schedule"] = node_config.schedule
 
         ### Validate resolved device auth after group+node merging for optional fields
+        resolved_protocol = str(device_config.get("protocol")).strip().lower()
+        if resolved_protocol not in SUPPORTED_PROTOCOLS:
+            raise ValueError(f"protocol must be one of {SUPPORTED_PROTOCOLS}")
+        device_config["protocol"] = resolved_protocol
+
+        if resolved_protocol == "telnet" and port_is_default:
+            device_config["port"] = 23
+
         resolved_password = str(device_config.get("password") or "").strip()
         resolved_key_file = str(device_config.get("ssh_key_file") or "").strip()
 
-        if not resolved_password and not resolved_key_file:
-            raise ValueError(
-                f"Device '{device_name}' in group '{group}' requires either password or ssh_key_file"
-            )
+        if resolved_protocol == "telnet":
+            if not resolved_password:
+                raise ValueError(
+                    f"Device '{device_name}' in group '{group}' requires password for telnet protocol"
+                )
+            if device_config.get("jumphost") is not None:
+                raise ValueError(
+                    f"Device '{device_name}' in group '{group}' uses telnet protocol which does not support jumphost"
+                )
+        elif resolved_protocol == "ssh":
+            if not resolved_password and not resolved_key_file:
+                raise ValueError(
+                    f"Device '{device_name}' in group '{group}' requires either password or ssh_key_file"
+                )
+            resolved_profile = str(device_config.get("ssh_profile") or "").strip()
+            if not resolved_profile:
+                raise ValueError(
+                    f"Device '{device_name}' in group '{group}' requires ssh_profile for SSH protocol"
+                )
+            device_config["ssh_profile"] = resolved_profile
 
         ### Validate jumphost details only when jumphost is configured
         jumphost_cfg = device_config.get("jumphost")
