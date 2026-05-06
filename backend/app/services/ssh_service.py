@@ -119,7 +119,7 @@ class SSHService:
 
         ### Default: handle common pagination markers even when vendor config doesn't define pagination settings
         if pagination_config is None:
-            return [(pattern, " ") for pattern in DEFAULT_PAGINATION_PATTERNS]
+            return [(pattern, DEFAULT_PAGINATION_RESPONSE) for pattern in DEFAULT_PAGINATION_PATTERNS]
 
         if not isinstance(pagination_config, dict):
             logger.warning(
@@ -1040,7 +1040,7 @@ class SSHService:
     ) -> tuple[str, str | None]:
         """Collect config in local test mode while reusing vendor processing rules."""
         ### Keep vendor command validation parity with real SSH path.
-        command_sets = vendor_service.get_backup_commands(vendor_id)
+        command_sets = vendor_service.get_backup_commands(vendor_id, protocol="ssh")
         backup_commands = command_sets.get("backup")
         if not backup_commands:
             raise ValueError(f"Vendor '{vendor_id}' has no backup commands configured")
@@ -1059,11 +1059,17 @@ class SSHService:
         self,
         device: DeviceBase,
     ) -> tuple[str, str | None]:
-        """Get device configuration plus optional metadata via local simulator or real SSH."""
+        """Get device configuration plus optional metadata via SSH or local simulator."""
         ### Get device config
         device_config = self.settings.get_device_config(device.group, device.device_name)
         enable_password_raw = str(device_config.get("enable_password") or "").strip()
         enable_password = enable_password_raw if enable_password_raw else None
+
+        protocol = str(device_config.get("protocol")).strip().lower()
+        if protocol != "ssh":
+            raise ValueError(
+                f"Device '{device.device_name}' in group '{device.group}' requires SSH protocol for ssh_service.py"
+            )
 
         ### Filter for required SSH config values
         timeout_seconds = int(device_config["timeout"])
