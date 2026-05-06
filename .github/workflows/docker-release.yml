@@ -71,7 +71,7 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ steps.meta.outputs.frontend }}:v${{ steps.meta.outputs.frontend_version }}
+            ${{ steps.meta.outputs.frontend }}:${{ steps.meta.outputs.frontend_version }}
             ${{ steps.meta.outputs.frontend }}:latest
 
       # -----------------
@@ -85,5 +85,5 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |
-            ${{ steps.meta.outputs.backend }}:v${{ steps.meta.outputs.backend_version }}
+            ${{ steps.meta.outputs.backend }}:${{ steps.meta.outputs.backend_version }}
             ${{ steps.meta.outputs.backend }}:latest
