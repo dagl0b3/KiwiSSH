@@ -15,7 +15,6 @@ from app.core import get_settings
 from app.models.backup import BackupRecord, BackupStatus
 from app.models.device import DeviceBase
 from app.services.ssh_service import ssh_service
-from app.services.telnet_service import telnet_service
 from app.services.git_service import git_service
 from app.services.backup_job_service import backup_job_service
 from app.db import database
@@ -436,22 +435,10 @@ class BackupService:
                     queue_wait_seconds,
                 )
 
-            ### Resolve device config once to choose protocol
-            settings = get_settings()
-            device_config = settings.get_device_config(device.group, device.device_name)
-            protocol = str(device_config.get("protocol") or "ssh").strip().lower()
-
-            ### Get config from device via SSH or Telnet (or simulator)
-            if protocol == "telnet":
-                config, metadata_output = await telnet_service.get_config(
-                    device,
-                    device_config=device_config,
-                )
-            elif protocol == "ssh":
-                config, metadata_output = await ssh_service.get_config(
-                    device,
-                    device_config=device_config,
-                )
+            ### Get config from device via SSH (or simulator)
+            ### SSHService resolves merged auth settings..
+            ## ..internally via settings.get_device_config.
+            config, metadata_output = await ssh_service.get_config(device)
             logger.debug(f"Got config for {device.device_name} ({len(config)} bytes)")
 
             ### Validate config for obvious capture issues before saving to git
