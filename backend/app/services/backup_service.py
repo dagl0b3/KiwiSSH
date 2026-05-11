@@ -40,6 +40,14 @@ CLI_ERROR_PATTERNS = [
 ]
 
 
+class ConfigCaptureValidationError(RuntimeError):
+    """Base error for invalid config captures."""
+
+
+class ConfigCaptureTooSmallError(ConfigCaptureValidationError):
+    """Raised when captured config is suspiciously small."""
+
+
 class BackupService:
     """Service for orchestrating device backups."""
 
@@ -383,7 +391,7 @@ class BackupService:
         ### Raise error if CLI error patterns are detected
         error_signature = self._find_cli_error_signature(config)
         if error_signature:
-            raise RuntimeError(
+            raise ConfigCaptureValidationError(
                 f"Captured config appears invalid (CLI error detected): {error_signature}"
             )
 
@@ -392,7 +400,7 @@ class BackupService:
         if previous_size is not None and previous_size >= 8192: # Size in bytes
             minimum_expected_size = max(1024, int(previous_size * 0.20)) # equals to at least 20% of previous size or 1KB, whichever is larger
             if config_size < minimum_expected_size and non_empty_lines < 60:
-                raise RuntimeError(
+                raise ConfigCaptureTooSmallError(
                     "Captured config is suspiciously small compared to previous successful backup "
                     f"({config_size} bytes vs previous {previous_size} bytes)"
                 )
