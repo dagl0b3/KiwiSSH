@@ -62,6 +62,7 @@ const diffStats = ref({ added: 0, removed: 0 })
 const diffLoading = ref(false)
 const diffError = ref<string | null>(null)
 const downloadingBackups = ref<Record<string, boolean>>({})
+const jobLookupLoading = ref<Record<string, boolean>>({})
 
 onMounted(async () => {
   await devicesStore.fetchDevice(deviceName.value)
@@ -255,6 +256,61 @@ async function triggerBackup() {
       }
     }
     alert(`Backup failed: ${e instanceof Error ? e.message : "Unknown error"}`)
+  }
+}
+
+async function openJobLog(backup: BackupEntry) {
+  if (!backup.timestamp) {
+    alert("Unable to locate job log: backup timestamp is missing.")
+    return
+  }
+
+  if (jobLookupLoading.value[backup.hash]) {
+    return
+  }
+
+  jobLookupLoading.value[backup.hash] = true
+
+  try {
+    const response = await backupApi.getJobs(deviceName.value, "success", 5000, 0)
+    const jobs = Array.isArray(response.jobs) ? response.jobs : []
+    const commitTime = new Date(backup.timestamp).getTime()
+
+    if (!Number.isFinite(commitTime)) {
+      alert("Unable to locate job log: backup timestamp is invalid.")
+      return
+    }
+
+    let bestJob = null as typeof jobs[number] | null
+    let bestDiff = Number.POSITIVE_INFINITY
+    for (const job of jobs) {
+      const jobTime = new Date(job.timestamp).getTime()
+      if (!Number.isFinite(jobTime)) continue
+      const diff = Math.abs(jobTime - commitTime)
+      if (diff < bestDiff) {
+        bestDiff = diff
+        bestJob = job
+      }
+    }
+
+    const maxDiffMs = 15 * 60 * 1000
+    if (!bestJob || bestDiff > maxDiffMs) {
+      alert("Unable to locate matching job log for this backup.")
+      return
+    }
+
+    await router.push({
+      name: "jobs",
+      query: {
+        job_id: bestJob.job_id,
+        device: deviceName.value,
+        open: "1",
+      },
+    })
+  } catch (e) {
+    alert(`Failed to open job log: ${e instanceof Error ? e.message : "Unknown error"}`)
+  } finally {
+    delete jobLookupLoading.value[backup.hash]
   }
 }
 
@@ -466,7 +522,9 @@ function formatFileSize(bytes: number): string {
             <div
               v-for="backup in paginatedBackupHistory"
               :key="backup.hash"
-              class="p-3 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors"
+              class="p-3 hover:bg-gray-50 dark:hover:bg-gray-800/70 transition-colors cursor-pointer"
+              title="Open backup job log"
+              @click="openJobLog(backup)"
             >
               <div class="flex items-center justify-between gap-4">
                 <div class="flex-1 min-w-0">
