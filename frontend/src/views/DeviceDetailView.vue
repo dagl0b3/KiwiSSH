@@ -20,6 +20,8 @@ interface BackupEntry {
   version_number: number
 }
 
+const graphHistoryCache = new Map<string, Array<{ timestamp: string }>>()
+
 const route = useRoute()
 const router = useRouter()
 const devicesStore = useDevicesStore()
@@ -45,6 +47,7 @@ const backupHistory = ref<BackupEntry[]>([])
 const historyLoading = ref(false)
 const historyError = ref<string | null>(null)
 const totalHistoryCount = ref(0)
+const graphBackups = ref<Array<{ timestamp: string }>>([])
 
 // Filter states
 const filterDateFrom = ref<string>("")
@@ -93,6 +96,24 @@ onMounted(async () => {
     : Promise.resolve()
   await Promise.all([devicePromise, vendorPromise, historyPromise, graphPromise])
 })
+
+async function loadGraphHistory() {
+  const cacheKey = deviceName.value
+  const cached = graphHistoryCache.get(cacheKey)
+  if (cached) {
+    graphBackups.value = cached
+    return
+  }
+
+  try {
+    const response = await backupApi.getHistory(deviceName.value)
+    const timestamps = (response.history || []).map((entry) => ({ timestamp: entry.timestamp }))
+    graphHistoryCache.set(cacheKey, timestamps)
+    graphBackups.value = timestamps
+  } catch (e) {
+    graphBackups.value = []
+  }
+}
 
 async function loadBackupHistory() {
   historyLoading.value = true
@@ -264,6 +285,8 @@ async function triggerBackup() {
 
     // Reload history after backup (for UI update)
     await loadBackupHistory()
+    graphHistoryCache.delete(deviceName.value)
+    await loadGraphHistory()
 
     // Reload device data from API to get updated status from database
     await devicesStore.fetchDevice(deviceName.value)
@@ -538,7 +561,7 @@ function formatFileSize(bytes: number): string {
       </div>
 
       <BackupContributionGraph
-        :backups="backupHistory"
+        :backups="graphBackups"
         :selected-date="selectedDateInGraph"
         @day-selected="setSelectedGraphDate"
         @day-cleared="clearSelectedGraphDate"
