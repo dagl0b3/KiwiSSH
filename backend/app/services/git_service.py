@@ -7,7 +7,7 @@ commits, history retrieval, and diff generation.
 import asyncio
 import logging
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -360,6 +360,67 @@ class GitService:
     async def get_config_history_count(self, device_name: str, group: str) -> int:
         """Get configuration history count without loading full history."""
         return await asyncio.to_thread(self._get_config_history_count_sync, device_name, group)
+
+    def _get_backup_graph_counts_sync(
+        self,
+        device_name: str,
+        group: str,
+        days: int = 365,
+        tz_offset_minutes: int = 0,
+    ) -> list[dict[str, int | str]]:
+        """Return per-day backup counts for the last N days (local dates)."""
+        bounded_days = max(1, int(days))
+        offset_delta = timedelta(minutes=-int(tz_offset_minutes))
+
+        lock = self._get_repo_lock(group)
+        with lock:
+            repo = self._ensure_repo(group)
+            if not self._has_commits(repo):
+                return []
+            
+            config_file = f"{device_name}.conf"
+
+            ### Calculate cutoff datetime in UTC based on local date boundary
+            now_utc = datetime.now(timezone.utc)
+            today_local = (now_utc + offset_delta).date()
+            start_date = today_local - timedelta(days=bounded_days - 1)
+            start_dt_utc = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc) - offset_delta
+
+            ### Try to get commit counts per day via git
+            counts: dict[str, int] = {}
+            try:
+                for commit in repo.iter_commits(paths=config_file, since=start_dt_utc.isoformat()):
+                    commit_dt = datetime.fromtimestamp(commit.committed_date, tz=timezone.utc)
+                    local_dt = commit_dt + offset_delta
+                    if local_dt.date() < start_date:
+                        continue
+
+                    ### Count commits when local date is within the last N days
+                    date_key = local_dt.date().isoformat()
+                    counts[date_key] = counts.get(date_key, 0) + 1
+            except Exception:
+                return []
+
+            return [
+                {"date": date_key, "count": counts[date_key]}
+                for date_key in sorted(counts.keys())
+            ]
+
+    async def get_backup_graph_counts(
+        self,
+        device_name: str,
+        group: str,
+        days: int = 365,
+        tz_offset_minutes: int = 0,
+    ) -> list[dict[str, int | str]]:
+        """Get per-day backup counts for the last N days without full history."""
+        return await asyncio.to_thread(
+            self._get_backup_graph_counts_sync,
+            device_name,
+            group,
+            days,
+            tz_offset_minutes,
+        )
 
     async def get_config_at_commit(
         self,
