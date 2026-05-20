@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount, computed, ref, watch } from "vue"
+import { useRoute } from "vue-router"
 import { useJobsStore } from "@/stores/jobs"
 import { useDevicesStore } from "@/stores/devices"
 import { backupApi } from "@/api/backups"
@@ -8,6 +9,7 @@ import LoadingSpinner from "@/components/LoadingSpinner.vue"
 
 const jobsStore = useJobsStore()
 const devicesStore = useDevicesStore()
+const route = useRoute()
 const showFilters = ref<boolean>(false)
 const showFlushDialog = ref<boolean>(false)
 const flushConfirmation = ref<string>("")
@@ -24,8 +26,22 @@ let jobIdSearchTimer: ReturnType<typeof setTimeout> | null = null
 let deviceSearchTimer: ReturnType<typeof setTimeout> | null = null
 
 onMounted(async () => {
+  const routeJobId = typeof route.query.job_id === "string" ? route.query.job_id : ""
+  const routeDevice = typeof route.query.device === "string" ? route.query.device : ""
+
+  if (routeDevice) {
+    filterDevice.value = routeDevice
+  }
+  if (routeJobId) {
+    filterJobId.value = routeJobId
+  }
+
   // Load jobs from database
-  await loadJobsPage()
+  await loadJobsPage(routeJobId || undefined, routeDevice || undefined)
+
+  if (routeJobId) {
+    await jobsStore.loadJobDetails(routeJobId)
+  }
 
   // Load devices for IP lookup
   if (devicesStore.devices.length === 0) {

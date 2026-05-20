@@ -1,5 +1,11 @@
 import api from "./index"
-import type { BackupTriggerResponse, BackupJobStatus, BackupJobsResponse } from "../types/backup"
+import type {
+  BackupTriggerResponse,
+  BackupJobStatus,
+  BackupJobsResponse,
+  BackupHistoryResponse,
+  BackupGraphResponse,
+} from "../types/backup"
 
 export const backupApi = {
   async triggerAll(params?: Record<string, string>): Promise<BackupTriggerResponse> {
@@ -34,9 +40,23 @@ export const backupApi = {
     return response.data
   },
 
-  async getHistory(deviceName: string, limit?: number): Promise<Record<string, unknown>> {
-    const params = limit === undefined ? undefined : { limit }
-    const response = await api.get(`/backups/history/${deviceName}`, { params })
+  async getHistory(deviceName: string, limit?: number, offset?: number): Promise<BackupHistoryResponse> {
+    const params: Record<string, number> = {}
+    if (limit !== undefined) params.limit = limit
+    if (offset !== undefined) params.offset = offset
+    const response = await api.get<BackupHistoryResponse>(`/backups/history/${deviceName}`, { params })
+    return response.data
+  },
+
+  async getHistoryGraph(
+    deviceName: string,
+    days?: number,
+    tzOffsetMinutes?: number,
+  ): Promise<BackupGraphResponse> {
+    const params: Record<string, number> = {}
+    if (days !== undefined) params.days = days
+    if (tzOffsetMinutes !== undefined) params.tz_offset_minutes = tzOffsetMinutes
+    const response = await api.get<BackupGraphResponse>(`/backups/history/graph/${deviceName}`, { params })
     return response.data
   },
 

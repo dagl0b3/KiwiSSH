@@ -7,7 +7,7 @@ commits, history retrieval, and diff generation.
 import asyncio
 import logging
 import threading
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -277,11 +277,70 @@ class GitService:
             message,
         )
 
+    def _get_config_history_sync(
+        self,
+        device_name: str,
+        group: str,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[dict[str, Any]]:
+        """Blocking git history lookup for a device config file."""
+        lock = self._get_repo_lock(group)
+        with lock:
+            ### Check if repo exists and has commits
+            repo = self._ensure_repo(group)
+            if not self._has_commits(repo):
+                return []
+            commits: list[dict[str, Any]] = []
+            config_file = f"{device_name}.conf"
+
+            commit_kwargs: dict[str, Any] = {"paths": config_file}
+            if limit is not None:
+                commit_kwargs["max_count"] = limit
+            if offset > 0:
+                commit_kwargs["skip"] = offset
+
+            try:
+                for commit in repo.iter_commits(**commit_kwargs):
+                    ### Get file size at this commit
+                    file_size_bytes = 0
+                    try:
+                        file_size_bytes = (commit.tree / config_file).size
+                    except KeyError:
+                        file_size_bytes = 0
+
+                    commits.append({
+                        "hash": commit.hexsha,
+                        "short_hash": commit.hexsha[:7],
+                        "message": commit.message.strip(),
+                        "author": commit.author.name,
+                        "date": datetime.fromtimestamp(commit.committed_date, tz=timezone.utc),
+                        "timestamp": datetime.fromtimestamp(commit.committed_date, tz=timezone.utc).isoformat(),
+                        "file_size_bytes": file_size_bytes,
+                        "version_number": 0,  # Will be set after we know total count
+                    })
+            except Exception:
+                return []
+
+            total_count = len(commits)
+            try:
+                total_count = int(repo.git.rev_list("--count", "HEAD", "--", config_file).strip())
+            except (ValueError, GitCommandError):
+                total_count = len(commits)
+
+            ### Assign version numbers globally - oldest commit = 1, newest = N
+            ### Commits are newest first, so reverse the numbering
+            for idx, commit in enumerate(commits):
+                commit["version_number"] = max(0, total_count - (offset + idx))
+
+            return commits
+
     async def get_config_history(
         self,
         device_name: str,
         group: str,
         limit: int | None = None,
+        offset: int = 0,
     ) -> list[dict[str, Any]]:
         """
         Get configuration history for a device.
@@ -290,64 +349,91 @@ class GitService:
             device_name: Name of the device
             group: Device group (determines which repo)
             limit: Maximum number of history entries to return. None returns all entries.
+            offset: Number of most recent entries to skip (for pagination)
 
         Returns:
             List of history entries with commit info, file sizes, and version numbers
         """
-        repo = self._ensure_repo(group)
-        commits = []
-        config_file = f"{device_name}.conf"
+        return await asyncio.to_thread(self._get_config_history_sync, device_name, group, limit, offset)
 
-        for commit in repo.iter_commits():
+    def _get_config_history_count_sync(self, device_name: str, group: str) -> int:
+        """Return commit count for a device config file using git rev-list."""
+        lock = self._get_repo_lock(group)
+        with lock:
+            ### Check if repo exists and has commits
+            repo = self._ensure_repo(group)
+            if not self._has_commits(repo):
+                return 0
+            config_file = f"{device_name}.conf"
+            try:
+                return int(repo.git.rev_list("--count", "HEAD", "--", config_file).strip())
+            except (ValueError, GitCommandError):
+                return 0
 
-            ### Check if this commit modified the device's config file
-            modified = False
+    async def get_config_history_count(self, device_name: str, group: str) -> int:
+        """Get configuration history count without loading full history."""
+        return await asyncio.to_thread(self._get_config_history_count_sync, device_name, group)
 
-            if commit.parents:
-                ### Not the first commit - check what files were modified
-                for parent in commit.parents:
-                    diffs = parent.diff(commit)
-                    for diff_item in diffs:
-                        ### Check both old path (a_path) and new path (b_path)
-                        if diff_item.a_path == config_file or diff_item.b_path == config_file:
-                            modified = True
-                            break
-                    if modified:
-                        break
-            else:
-                ### First commit - check if file exists in tree
-                for item in commit.tree.traverse():
-                    if item.path == config_file:
-                        modified = True
-                        break
+    def _get_backup_graph_counts_sync(
+        self,
+        device_name: str,
+        group: str,
+        days: int = 365,
+        tz_offset_minutes: int = 0,
+    ) -> list[dict[str, int | str]]:
+        """Return per-day backup counts for the last N days (local dates)."""
+        bounded_days = max(1, int(days))
+        offset_delta = timedelta(minutes=-int(tz_offset_minutes))
 
-            if not modified:
-                continue
+        lock = self._get_repo_lock(group)
+        with lock:
+            repo = self._ensure_repo(group)
+            if not self._has_commits(repo):
+                return []
+            
+            config_file = f"{device_name}.conf"
 
-            ### Get file size at this commit
-            file_size_bytes = 0
-            for item in commit.tree.traverse():
-                if item.path == config_file:
-                    file_size_bytes = item.size
-                    break
+            ### Calculate cutoff datetime in UTC based on local date boundary
+            now_utc = datetime.now(timezone.utc)
+            today_local = (now_utc + offset_delta).date()
+            start_date = today_local - timedelta(days=bounded_days - 1)
+            start_dt_utc = datetime.combine(start_date, datetime.min.time(), tzinfo=timezone.utc) - offset_delta
 
-            commits.append({
-                "hash": commit.hexsha,
-                "short_hash": commit.hexsha[:7],
-                "message": commit.message.strip(),
-                "author": commit.author.name,
-                "date": datetime.fromtimestamp(commit.committed_date, tz=timezone.utc),
-                "timestamp": datetime.fromtimestamp(commit.committed_date, tz=timezone.utc).isoformat(),
-                "file_size_bytes": file_size_bytes,
-                "version_number": 0,  # Will be set after we know total count
-            })
+            ### Try to get commit counts per day via git
+            counts: dict[str, int] = {}
+            try:
+                for commit in repo.iter_commits(paths=config_file, since=start_dt_utc.isoformat()):
+                    commit_dt = datetime.fromtimestamp(commit.committed_date, tz=timezone.utc)
+                    local_dt = commit_dt + offset_delta
+                    if local_dt.date() < start_date:
+                        continue
 
-        ### Assign version numbers globally - oldest commit = 1, newest = N
-        ### Commits are newest first, so reverse the numbering
-        for idx, commit in enumerate(commits):
-            commit["version_number"] = len(commits) - idx
+                    ### Count commits when local date is within the last N days
+                    date_key = local_dt.date().isoformat()
+                    counts[date_key] = counts.get(date_key, 0) + 1
+            except Exception:
+                return []
 
-        return commits if limit is None else commits[:limit]
+            return [
+                {"date": date_key, "count": counts[date_key]}
+                for date_key in sorted(counts.keys())
+            ]
+
+    async def get_backup_graph_counts(
+        self,
+        device_name: str,
+        group: str,
+        days: int = 365,
+        tz_offset_minutes: int = 0,
+    ) -> list[dict[str, int | str]]:
+        """Get per-day backup counts for the last N days without full history."""
+        return await asyncio.to_thread(
+            self._get_backup_graph_counts_sync,
+            device_name,
+            group,
+            days,
+            tz_offset_minutes,
+        )
 
     async def get_config_at_commit(
         self,
@@ -369,20 +455,23 @@ class GitService:
         Raises:
             ValueError: If commit not found
         """
-        repo = self._ensure_repo(group)
+        lock = self._get_repo_lock(group)
+        with lock:
+            ### Check that repo exists
+            repo = self._ensure_repo(group)
 
-        try:
-            commit = repo.commit(commit_hash)
-        except Exception as e:
-            raise ValueError(f"Commit {commit_hash} not found") from e
+            try:
+                commit = repo.commit(commit_hash)
+            except Exception as e:
+                raise ValueError(f"Commit {commit_hash} not found") from e
 
-        ### Get all files in the commit
-        config_file = f"{device_name}.conf"
-        for item in commit.tree.traverse():
-            if item.path == config_file:
-                return item.data_stream.read().decode("utf-8")
+            ### Get all files in the commit
+            config_file = f"{device_name}.conf"
+            for item in commit.tree.traverse():
+                if item.path == config_file:
+                    return item.data_stream.read().decode("utf-8")
 
-        raise ValueError(f"No config found for {device_name} at commit {commit_hash}")
+            raise ValueError(f"No config found for {device_name} at commit {commit_hash}")
 
     async def get_diff(
         self,
@@ -403,36 +492,39 @@ class GitService:
         Returns:
             BackupDiff object with diff information
         """
-        repo = self._ensure_repo(group)
+        lock = self._get_repo_lock(group)
+        with lock:
+            ### Check if repo exists
+            repo = self._ensure_repo(group)
 
-        try:
-            from_commit_obj = repo.commit(from_commit)
-            to_commit_obj = repo.commit(to_commit)
-        except Exception as e:
-            raise ValueError(f"Commits not found: {e}") from e
+            try:
+                from_commit_obj = repo.commit(from_commit)
+                to_commit_obj = repo.commit(to_commit)
+            except Exception as e:
+                raise ValueError(f"Commits not found: {e}") from e
 
-        ### Generate unified diff scoped to this device file only.
-        ### Without path scoping, git includes changes from other devices in the same repo.
-        config_file = f"{device_name}.conf"
-        diff_text = repo.git.diff(from_commit, to_commit, "--", config_file)
+            ### Generate unified diff scoped to this device file only.
+            ### Without path scoping, git includes changes from other devices in the same repo.
+            config_file = f"{device_name}.conf"
+            diff_text = repo.git.diff(from_commit, to_commit, "--", config_file)
 
-        ### Calculate statistics
-        added_lines = diff_text.count("\n+") - diff_text.count("\n+++")
-        removed_lines = diff_text.count("\n-") - diff_text.count("\n---")
+            ### Calculate statistics
+            added_lines = diff_text.count("\n+") - diff_text.count("\n+++")
+            removed_lines = diff_text.count("\n-") - diff_text.count("\n---")
 
-        from_date = datetime.fromtimestamp(from_commit_obj.committed_date, tz=timezone.utc)
-        to_date = datetime.fromtimestamp(to_commit_obj.committed_date, tz=timezone.utc)
+            from_date = datetime.fromtimestamp(from_commit_obj.committed_date, tz=timezone.utc)
+            to_date = datetime.fromtimestamp(to_commit_obj.committed_date, tz=timezone.utc)
 
-        return BackupDiff(
-            device_name=device_name,
-            from_commit=from_commit,
-            to_commit=to_commit,
-            from_timestamp=from_date,
-            to_timestamp=to_date,
-            diff_content=diff_text,
-            lines_added=max(0, added_lines),
-            lines_removed=max(0, removed_lines),
-        )
+            return BackupDiff(
+                device_name=device_name,
+                from_commit=from_commit,
+                to_commit=to_commit,
+                from_timestamp=from_date,
+                to_timestamp=to_date,
+                diff_content=diff_text,
+                lines_added=max(0, added_lines),
+                lines_removed=max(0, removed_lines),
+            )
 
     async def get_latest_commit(self, device_name: str) -> dict[str, Any] | None:
         """

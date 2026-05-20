@@ -40,6 +40,14 @@ CLI_ERROR_PATTERNS = [
 ]
 
 
+class ConfigCaptureValidationError(RuntimeError):
+    """Base error for invalid config captures."""
+
+
+class ConfigCaptureTooSmallError(ConfigCaptureValidationError):
+    """Raised when captured config is suspiciously small."""
+
+
 class BackupService:
     """Service for orchestrating device backups."""
 
@@ -383,7 +391,7 @@ class BackupService:
         ### Raise error if CLI error patterns are detected
         error_signature = self._find_cli_error_signature(config)
         if error_signature:
-            raise RuntimeError(
+            raise ConfigCaptureValidationError(
                 f"Captured config appears invalid (CLI error detected): {error_signature}"
             )
 
@@ -392,7 +400,7 @@ class BackupService:
         if previous_size is not None and previous_size >= 8192: # Size in bytes
             minimum_expected_size = max(1024, int(previous_size * 0.20)) # equals to at least 20% of previous size or 1KB, whichever is larger
             if config_size < minimum_expected_size and non_empty_lines < 60:
-                raise RuntimeError(
+                raise ConfigCaptureTooSmallError(
                     "Captured config is suspiciously small compared to previous successful backup "
                     f"({config_size} bytes vs previous {previous_size} bytes)"
                 )
@@ -441,21 +449,36 @@ class BackupService:
             device_config = settings.get_device_config(device.group, device.device_name)
             protocol = str(device_config.get("protocol") or "ssh").strip().lower()
 
-            ### Get config from device via SSH or Telnet (or simulator)
-            if protocol == "telnet":
-                config, metadata_output = await telnet_service.get_config(
-                    device,
-                    device_config=device_config,
-                )
-            elif protocol == "ssh":
-                config, metadata_output = await ssh_service.get_config(
-                    device,
-                    device_config=device_config,
-                )
-            logger.debug(f"Got config for {device.device_name} ({len(config)} bytes)")
+            async def _fetch_config() -> tuple[str, str | None]:
+                if protocol == "telnet":
+                    return await telnet_service.get_config(
+                        device,
+                        device_config=device_config,
+                    )
+                if protocol == "ssh":
+                    return await ssh_service.get_config(
+                        device,
+                        device_config=device_config,
+                    )
+                raise RuntimeError(f"Unsupported protocol: {protocol}")
 
-            ### Validate config for obvious capture issues before saving to git
-            config_size = await asyncio.to_thread(self._validate_config_capture, device.device_name, config)
+            ### Get config from device via SSH or Telnet (or simulator)
+            for attempt in range(2):
+                config, metadata_output = await _fetch_config()
+                logger.debug(f"Got config for {device.device_name} ({len(config)} bytes)")
+                try:
+                    ### Validate config for obvious capture issues before saving to git
+                    config_size = await asyncio.to_thread(self._validate_config_capture, device.device_name, config)
+                    break
+                except ConfigCaptureTooSmallError as ex:
+                    if attempt == 0:
+                        logger.warning(
+                            "Config capture for %s appears too small; retrying once: %s",
+                            device.device_name,
+                            ex,
+                        )
+                        continue
+                    raise
 
             ### Save config to git (using device's group)
             commit_hash, has_changes = await git_service.save_config(

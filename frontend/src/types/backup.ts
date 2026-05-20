@@ -61,6 +61,43 @@ export interface BackupJobRecord {
   metadata_output?: string | null
 }
 
+export interface BackupHistoryEntry {
+  hash: string
+  short_hash: string
+  message: string
+  author: string
+  date: string
+  timestamp: string
+  file_size_bytes: number
+  version_number: number
+}
+
+export interface BackupHistoryResponse {
+  device_name: string
+  history: BackupHistoryEntry[]
+  count: number
+  total_count: number
+  limit: number | null
+  offset: number
+  error?: string
+}
+
+export interface BackupGraphDay {
+  date: string
+  count: number
+}
+
+export interface BackupGraphResponse {
+  device_name: string
+  days: number
+  tz_offset_minutes?: number
+  from?: string
+  to?: string
+  total?: number
+  counts: BackupGraphDay[]
+  error?: string
+}
+
 export interface BackupJobsResponse {
   count: number
   total_count: number
