@@ -49,6 +49,80 @@ class NotificationService:
 
         return False
 
+    ### ==================================================================================
+    ### SMTP Helpers
+    ### ==================================================================================
+
+    def _build_subject(self, device_name: str, group: str, status: BackupStatus) -> str:
+        """Build email subject line."""
+        label = {
+            BackupStatus.SUCCESS: "Success",
+            BackupStatus.FAILED: "Failed",
+        }.get(status, status.value.replace("_", " ").title())
+        return f"[KiwiSSH] Backup {label}: {device_name} ({group})"
+
+    def _build_body(
+        self,
+        device_name: str,
+        group: str,
+        status: BackupStatus,
+        job_id: str | None,
+        error_message: str | None,
+        duration_seconds: float | None,
+        timestamp: datetime | None,
+    ) -> str:
+        """Build plain text email body."""
+        lines = [
+            "KiwiSSH Backup Notification",
+            "=" * 40,
+            f"Device    : {device_name}",
+            f"Group     : {group}",
+            f"Status    : {status.value.upper()}",
+        ]
+        if timestamp:
+            lines.append(f"Timestamp : {timestamp.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        if duration_seconds is not None:
+            lines.append(f"Duration  : {duration_seconds:.1f}s")
+        if job_id:
+            lines.append(f"Job ID    : {job_id}")
+        if error_message:
+            lines.extend(["", "Error Detail:", "-" * 40, error_message])
+        lines.extend(["", "-" * 40, "This message was sent by KiwiSSH."])
+        return "\n".join(lines)
+    ### ==================================================================================
+    ### Send Notification for Type N Methods
+    ### ==================================================================================
+
+    async def _notify_smtp(
+        self,
+        device_name: str,
+        group: str,
+        result: "BackupRecord",
+        smtp_config: SmtpConfig,
+    ) -> None:
+        """Send an SMTP email notification for a backup result."""
+        subject = self._build_subject(device_name, group, result.status)
+        body = self._build_body(
+            device_name=device_name,
+            group=group,
+            status=result.status,
+            job_id=result.job_id,
+            error_message=result.error_message,
+            duration_seconds=result.duration_seconds,
+            timestamp=result.timestamp,
+        )
+
+        ### WIP: Logic to send mail
+
+        logger.info(
+            "Sent smtp notification for %s (status=%s) to %d recipient(s)",
+            device_name,
+            result.status.value,
+            len(smtp_config.recipients),
+        )
+
+    ### TODO: _notify_XYZ()
+
     ### Main entrypoint
     async def send_notification(
         self,
@@ -80,6 +154,15 @@ class NotificationService:
                 previous_status,
             )
             return
+
+        ### Dispatch to each configured channel
+        if notifications.type.smtp is not None:
+            try:
+                await self._notify_smtp(device_name, group, result, notifications.type.smtp)
+            except Exception as ex:
+                logger.warning("Failed to send smtp notification for %s: %s", device_name, ex)
+
+        ### TODO: If notification.type.XYZ is not none...
 
 
 ### Singleton instance
