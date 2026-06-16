@@ -147,6 +147,30 @@ class BackupJobService:
             desc(BackupJob.timestamp)
         ).first()
 
+    ### Helper method for notification sending logic
+    @staticmethod
+    def get_previous_completed_status(db: Session, device_name: str) -> str | None:
+        """Get the status of the most recent completed backup job for a device.
+
+        Only considers statuses 'success' / 'no_changes' / 'failed'.
+        Excludes 'in_progress' and 'pending' jobs so always the last 
+        known-good result is returned.
+
+        Args:
+            db: Database session
+            device_name: Name of the device
+
+        Returns:
+            Status string ('success', 'no_changes', 'failed') or None if no history
+        """
+        job = db.query(BackupJob).filter(
+            BackupJob.device_name == device_name,
+            BackupJob.status.in_(["success", "no_changes", "failed"]),
+        ).order_by(
+            desc(BackupJob.timestamp)
+        ).first()
+        return str(job.status) if job else None
+
     @staticmethod
     def get_latest_jobs_for_devices(db: Session, device_names: list[str]) -> dict[str, BackupJob]:
         """Get the most recent backup job for multiple devices in a single query.

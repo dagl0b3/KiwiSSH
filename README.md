@@ -32,6 +32,7 @@ It was created as better alternative to RANCID and Oxidized, with a focus on sim
   - [kiwissh.yaml](#kiwisshyaml)
     - [app](#app)
     - [application\_database](#application_database)
+    - [notifications](#notifications)
     - [sources](#sources)
       - [File](#file)
       - [PostgreSQL](#postgresql)
@@ -49,6 +50,7 @@ It was created as better alternative to RANCID and Oxidized, with a focus on sim
   - [How do I setup a remote git location?](#how-do-i-setup-a-remote-git-location)
   - [When do I choose the global `git.remote` vs per-group overrides (`groups.<group>.git.remote`)?](#when-do-i-choose-the-global-gitremote-vs-per-group-overrides-groupsgroupgitremote)
   - [fatal: Could not read from remote repository](#fatal-could-not-read-from-remote-repository)
+  - [Third Party Monitoring](#third-party-monitoring)
 - [Future Goals](#future-goals)
 - [Technical Documentation](#technical-documentation)
 - [Contributing to KiwiSSH](#contributing-to-kiwissh)
@@ -189,6 +191,30 @@ The `application_database` segment is used to configure the connection to the Po
 | `application_database.database` | The name of the PostgreSQL database. | **Yes** | - |
 | `application_database.username` | The username for the PostgreSQL database. | **Yes** | - |
 | `application_database.password` | The password for the PostgreSQL database. | **Yes** | - |
+
+### notifications
+
+You can get notified if the backup of a device fails or succeeds.
+
+**When to notify (trigger)?**
+
+- `always`: Notify on every backup attempt regardless of the outcome (success or failure).
+- `failure`: Notify on every failed backup attempt, regardless of previous history.
+- `failure_new`: Notify on a failed backup attempt **only** if the previous backup was "Successful", "No Changes", or if there is no previous history (first ever backup failure). This avoids notification fatigue by only alerting on new failures.
+
+| Key | Description | Required | Default Value |
+| --- | ----------- | -------- | ------------- |
+| `notifications.enabled` | Whether notifications are enabled. | No | `False` |
+| `notifications.trigger` | The notification trigger. | No | `failure` |
+| `notifications.type` | The type of notification. | **Yes** | - |
+| `notifications.smtp.host` | The SMTP server host. | **Yes** | - |
+| `notifications.smtp.port` | The SMTP server port. | No | `25` |
+| `notifications.smtp.sender` | The sender email address. | **Yes** | - |
+| `notifications.smtp.recipients` | The recipient email addresses (list). | **Yes** | - |
+| `notifications.smtp.username` | The username for the SMTP server. | No | - |
+| `notifications.smtp.password` | The password for the SMTP server. | No | - |
+| `notifications.smtp.use_tls` | Whether to use STARTTLS. Change the port accordingly. | No | `False` |
+| `notifications.smtp.use_ssl` | Whether to use SSL/TLS. Change the port accordingly. | No | `False` |
 
 ### sources
 
@@ -496,6 +522,34 @@ ERROR: Remote push failed for group <your-group>: Cmd('git') failed due to: exit
 
 > [!TIP]
 > In order to persistently keep the `known_hosts` file in Docker, make sure to mount a volume to `/home/kiwissh/.ssh` and ensure the permissions are correct to ensure successful SSH authentication when pushing even after restarting the container.
+
+## Third Party Monitoring
+
+You can monitor the status of your devices and backup jobs with third-party monitoring tools like Uptime Kuma, Icinga, Nagios, etc. by scraping the API endpoint `/api/v1/devices/{device_name}`. You can set up alerts based on the backup status (e.g. if the latest backup job failed or if no successful backup has been recorded for a certain period of time).
+
+The endpoint will return the following information about the device:
+
+> [!IMPORTANT]
+> Response based on KiwiSSH Backend v2.4.0 (16.06.2026). Make sure to check the API documentation for the version you are using to confirm the response structure.
+
+```json
+{
+  "device_name": "hostname.domain.tld",
+  "ip_address": "10.30.243.42",
+  "vendor": "cisco_ios",
+  "group": "customer-abc-router",
+  "ssh_profile": "modern",
+  "protocol": "telnet",
+  "port": 23,
+  "enabled": true,
+  "status": "backup_no_changes",
+  "last_backup": "2026-06-16T07:34:00.299083Z",
+  "last_backup_success": "2026-06-16T07:34:00.299083Z",
+  "last_error": null,
+  "backup_count": 31,
+  "schedule": "0 5,19 * * * (Europe/Berlin)"
+}
+```
 
 ---
 

@@ -2,6 +2,7 @@
 
 import os
 import logging
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -192,6 +193,83 @@ class NodeGitConfig(BaseModel):
         text = str(template).strip()
         return text or None
 
+
+### =====================================================================
+### Notification Configuration
+
+class NotificationTrigger(str, Enum):
+    """Controls when backup notifications are sent."""
+    ALWAYS = "always"                     # Notify on every Success or Failed
+    FAILURE = "failure"                   # Notify on every Failed
+    FAILURE_NEW = "failure_new"           # Notify on Failed **ONLY** when previous was Success, No Changes or None (first ever backup failure)
+
+
+class SmtpConfig(BaseModel):
+    """SMTP server configuration for email notifications."""
+    host: str
+    port: int = Field(default=25, ge=1, le=65535)
+    sender: str
+    recipients: list[str] = Field(default_factory=list)
+    username: str | None = None
+    password: str | None = None
+    use_tls: bool = False # STARTTLS (typically port 587)
+    use_ssl: bool = False # Direct SSL/TLS (typically port 465)
+
+    @field_validator("host", "sender", mode="before")
+    @classmethod
+    def validate_non_empty_text(cls, value: str | None) -> str:
+        """Require non-empty strings for host and sender."""
+        text = "" if value is None else str(value).strip()
+        if not text:
+            raise ValueError("notifications.smtp host and sender must be non-empty strings")
+        return text
+
+    @field_validator("recipients", mode="before")
+    @classmethod
+    def validate_recipients(cls, value: list | None) -> list[str]:
+        """Require at least one recipient address."""
+        if not value:
+            raise ValueError("notifications.smtp.recipients must contain at least one address")
+        cleaned = [str(r).strip() for r in value if str(r).strip()]
+        if not cleaned:
+            raise ValueError("notifications.smtp.recipients must contain at least one address")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_tls_ssl_exclusive(self) -> "SmtpConfig":
+        """Ensure use_tls and use_ssl are not both enabled simultaneously."""
+        if self.use_tls and self.use_ssl:
+            raise ValueError("notifications.smtp: use_tls and use_ssl cannot both be true")
+        return self
+
+
+class NotificationType(BaseModel):
+    """Notification delivery channel."""
+    smtp: SmtpConfig | None = None
+    # TODO: webhook, slack, teams, ...
+
+
+class NotificationsConfig(BaseModel):
+    """Global notification configuration."""
+    enabled: bool = False
+    trigger: NotificationTrigger = NotificationTrigger.FAILURE
+    type: NotificationType = Field(default_factory=NotificationType)
+
+    @model_validator(mode="after")
+    def validate_type_config(self) -> "NotificationsConfig":
+        """Require at least one channel config block when notifications are enabled."""
+        if not self.enabled:
+            return self
+        if self.type.smtp is None:
+            raise ValueError(
+                "At least one notification channel must be configured under notifications.type "
+                "(e.g. notifications.type.smtp) when notifications.enabled is true"
+            )
+        ### TODO: Update check for multiple channels
+        return self
+
+
+### =====================================================================
 
 class JumphostBaseConfig(BaseModel):
     """Shared reusable jumphost fields for group and node-level config."""
@@ -573,6 +651,7 @@ class Settings(BaseSettings):
     sources: SourcesConfig | None = None
     git: GitConfig = Field(default_factory=GitConfig)
     application_database: ApplicationDatabaseConfig | None = None
+    notifications: NotificationsConfig = Field(default_factory=NotificationsConfig)
     schedule: ScheduleConfig | None = None
     api: ApiConfig = Field(default_factory=ApiConfig)
 
@@ -626,6 +705,9 @@ class Settings(BaseSettings):
 
             ### application_database
             self.application_database = ApplicationDatabaseConfig(**file_content.get("application_database", {}))
+
+            ### notifications
+            self.notifications = NotificationsConfig(**file_content.get("notifications", {}))
 
         ### Load SSH profiles
         ssh_profiles_file = self.config_dir / "ssh_profiles.yaml"
