@@ -207,12 +207,12 @@ class NotificationTrigger(str, Enum):
 class SmtpConfig(BaseModel):
     """SMTP server configuration for email notifications."""
     host: str
-    port: int = Field(default=587, ge=1, le=65535)
+    port: int = Field(default=25, ge=1, le=65535)
     sender: str
     recipients: list[str] = Field(default_factory=list)
     username: str | None = None
     password: str | None = None
-    use_tls: bool = True # STARTTLS (default)
+    use_tls: bool = False # STARTTLS (typically port 587)
     use_ssl: bool = False # Direct SSL/TLS (typically port 465)
 
     @field_validator("host", "sender", mode="before")
