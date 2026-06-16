@@ -18,6 +18,7 @@ from app.services.ssh_service import ssh_service
 from app.services.telnet_service import telnet_service
 from app.services.git_service import git_service
 from app.services.backup_job_service import backup_job_service
+from app.services.notification_service import notification_service
 from app.db import database
 from app.utils.timezone import get_utc_now
 
@@ -281,6 +282,20 @@ class BackupService:
             return "success"
         return "failed"
 
+    def _get_previous_backup_status(self, device_name: str) -> str | None:
+        """Fetch the last completed backup status for a device (used for anomaly detection)."""
+        try:
+            if database.SessionLocal is None:
+                return None
+            db = database.SessionLocal()
+            try:
+                return backup_job_service.get_previous_completed_status(db, device_name)
+            finally:
+                db.close()
+        except Exception as ex:
+            logger.debug("Could not fetch previous backup status for %s: %s", device_name, ex)
+            return None
+
     def _create_in_progress_job(self, device: DeviceBase) -> str | None:
         """Create a backup job record with 'in_progress' status.
         
@@ -427,6 +442,9 @@ class BackupService:
         Returns:
             BackupRecord with backup status and job_id for tracking
         """
+        ### Fetch previous status for notification sending
+        previous_status = await asyncio.to_thread(self._get_previous_backup_status, device.device_name)
+        
         ### Create in_progress job so UI can show backup status immediately
         job_id = await asyncio.to_thread(self._create_in_progress_job, device)
         started_at = time.perf_counter()
@@ -523,6 +541,9 @@ class BackupService:
                 metadata_output=metadata_output,
             )
             await asyncio.to_thread(self._update_job_final_status, job_id, result)
+            await notification_service.send_notification(
+                device.device_name, device.group, result, previous_status, settings.notifications
+            )
             return result
 
         except Exception as e:
@@ -538,6 +559,9 @@ class BackupService:
                 metadata_output=metadata_output,
             )
             await asyncio.to_thread(self._update_job_final_status, job_id, result)
+            await notification_service.send_notification(
+                device.device_name, device.group, result, previous_status, settings.notifications
+            )
             return result
 
     async def get_backup_status(self, job_id: str) -> dict:
