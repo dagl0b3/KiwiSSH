@@ -2,6 +2,7 @@
 
 import os
 import logging
+from enum import Enum
 from functools import lru_cache
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -201,6 +202,45 @@ class NotificationTrigger(str, Enum):
     ALWAYS = "always"                     # Notify on every Success or Failed
     FAILURE_ALL = "failure_all"           # Notify on every Failed
     FAILURE_ANOMALY = "failure_anomaly"   # Notify on Failed only when previous was Success or No Changes
+
+
+class SmtpConfig(BaseModel):
+    """SMTP server configuration for email notifications."""
+    host: str
+    port: int = Field(default=587, ge=1, le=65535)
+    sender: str
+    recipients: list[str] = Field(default_factory=list)
+    username: str | None = None
+    password: str | None = None
+    use_tls: bool = True # STARTTLS (default)
+    use_ssl: bool = False # Direct SSL/TLS (typically port 465)
+
+    @field_validator("host", "sender", mode="before")
+    @classmethod
+    def validate_non_empty_text(cls, value: str | None) -> str:
+        """Require non-empty strings for host and sender."""
+        text = "" if value is None else str(value).strip()
+        if not text:
+            raise ValueError("notifications.smtp host and sender must be non-empty strings")
+        return text
+
+    @field_validator("recipients", mode="before")
+    @classmethod
+    def validate_recipients(cls, value: list | None) -> list[str]:
+        """Require at least one recipient address."""
+        if not value:
+            raise ValueError("notifications.smtp.recipients must contain at least one address")
+        cleaned = [str(r).strip() for r in value if str(r).strip()]
+        if not cleaned:
+            raise ValueError("notifications.smtp.recipients must contain at least one address")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_tls_ssl_exclusive(self) -> "SmtpConfig":
+        """Ensure use_tls and use_ssl are not both enabled simultaneously."""
+        if self.use_tls and self.use_ssl:
+            raise ValueError("notifications.smtp: use_tls and use_ssl cannot both be true")
+        return self
 
 
 class NotificationType(BaseModel):
