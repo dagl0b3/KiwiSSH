@@ -205,7 +205,7 @@ class GitService:
         config_content: str,
         group: str,
         message: str | None = None,
-    ) -> tuple[str, bool]:
+    ) -> tuple[str, bool, int, int]:
         """
         Save configuration to git repository.
 
@@ -216,7 +216,7 @@ class GitService:
             message: Commit message (optional, will use template if not provided)
 
         Returns:
-            Tuple of (git commit hash, has_changes)
+            Tuple of (git commit hash, has_changes, lines_added, lines_removed)
             - has_changes=False means the config is identical to the last backup
         """
         lock = self._get_repo_lock(group)
@@ -242,7 +242,7 @@ class GitService:
             ### Only commit if there are changes
             if not has_changes:
                 ### Return a dummy hash and False to indicate no changes
-                return ("", False) # TODO: Why do we need the hash here?
+                return ("", False, 0, 0) # TODO: Why do we need the hash here?
 
             ### Stage the file
             repo.index.add([config_file.name])
@@ -264,7 +264,10 @@ class GitService:
                         group,
                     )
 
-            return (commit.hexsha, True)
+            commit_stats = commit.stats.files.get(config_file.name, {})
+            lines_added = commit_stats.get("insertions", 0)
+            lines_removed = commit_stats.get("deletions", 0)
+            return (commit.hexsha, True, lines_added, lines_removed)
 
     async def save_config(
         self,
@@ -272,7 +275,7 @@ class GitService:
         config_content: str,
         group: str,
         message: str | None = None,
-    ) -> tuple[str, bool]:
+    ) -> tuple[str, bool, int, int]:
         """Save configuration to git repository without blocking the event loop."""
         return await asyncio.to_thread(
             self._save_config_sync,

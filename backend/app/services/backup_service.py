@@ -499,7 +499,7 @@ class BackupService:
                     raise
 
             ### Save config to git (using device's group)
-            commit_hash, has_changes = await git_service.save_config(
+            commit_hash, has_changes, lines_added, lines_removed = await git_service.save_config(
                 device.device_name,
                 config,
                 group=device.group,
