@@ -546,7 +546,8 @@ class BackupService:
             )
             await asyncio.to_thread(self._update_job_final_status, job_id, result)
             await notification_service.send_notification(
-                device.device_name, device.group, result, previous_status, settings.notifications
+                device.device_name, device.group, result, previous_status, settings.notifications,
+                lines_added=lines_added, lines_removed=lines_removed,
             )
             return result
 
