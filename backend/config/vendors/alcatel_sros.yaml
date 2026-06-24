@@ -1,0 +1,69 @@
+### Alcatel SROS Vendor Configuration
+## Instructions for backing up Alcatel SROS devices
+
+### Nokia SR OS (Formerly TiMOS) (formerly TiMetra, Alcatel, Alcatel-Lucent).
+### Used in 7705 SAR, 7210 SAS, 7450 ESS, 7750 SR, 7950 XRS, and NSP.
+
+vendor:
+  id: "alcatel_sros"
+  name: "Alcatel SROS"
+  description: "Alcatel SROS devices"
+
+### Session-level output behavior.
+session:
+  comment_prefix: "# "
+  prompt: '^([-\w.:>*]+\s?[#>]\s?)$'
+
+### Commands to execute for backup
+## Supported step types in command phases:
+## - command: sends command text
+## - command + then: sends command text, then sends interactive input
+commands:
+  ### Pre-backup commands (prepare the session) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  pre_backup:
+    - command: "environment no more"
+      description: "Disable pagination"
+
+  ### Main backup command(s)
+  ## Commands whose output becomes the stored configuration
+  backup:
+    - command: "show bof"
+      metadata: true
+    - command: "show system information"
+      metadata: true
+    - command: "show card state"
+      metadata: true
+    - command: "show chassis"
+      metadata: true
+    - command: "file type bootlog.txt"
+      metadata: true
+    - command: "show debug"
+      metadata: true
+    - command: "file type config.dbg"
+      metadata: true
+    - command: "admin display-config index"
+      description: "Show the running persistent indices"
+      show_command_in_config: true
+    - command: "admin display-config"
+      description: "Show the running configuration"
+      show_command_in_config: true
+
+  ### Post-backup commands (cleanup) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  post_backup:
+    - command: "logout"
+
+### Configuration processing rules
+## Processing reduces diff noise and trims non-config boilerplate
+processing:
+  strip_patterns:
+    - '^System Up Time.*$'
+  # config_start: "^config "
+  # config_end: "^end$"
+  ### Secret masking. When enabled=false, no redaction is applied.
+  redaction:
+    enabled: false
+    # patterns:
+    #   - search: "^(#private-encryption-key=).+"
+    #     replacement: "\\1<secret hidden>"

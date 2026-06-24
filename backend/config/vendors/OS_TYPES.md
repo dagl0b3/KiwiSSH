@@ -1,34 +1,39 @@
 # Supported OS/Device Types
 
-| Vendor       | OS/Device Type        | YAML file                                                                        | Notes                                  |
-| ------------ | --------------------- | -------------------------------------------------------------------------------- | -------------------------------------- |
-| A10 Networks | A10 ACOS              | [a10_acos.yaml](/backend/config/vendors/a10_acos.yaml)                           |                                        |
-| Arista       | EOS                   | [arista_eos.yaml](/backend/config/vendors/arista_eos.yaml)                       |                                        |
-| Aruba        | AOS-CX                | [aruba_aoscx.yaml](/backend/backend/config/vendors/aruba_aoscx.yaml)             | [AOS-CX](#hpe-aruba-networking)        |
-| Aruba        | AOS-W                 | [aruba_aosw.yaml](/backend/config/vendors/aruba_aosw.yaml)                       | [AOS-W](#hpe-aruba-networking)         |
-| Aruba        | IAP/Instant           | [aruba_iap.yaml](/backend/config/vendors/aruba_iap.yaml)                         | [Aruba Instant](#hpe-aruba-networking) |
-| Casa         | Casa                  | [casa_casa.yaml](/backend/config/vendors/casa_casa.yaml)                         |                                        |
-| Cisco        | ACS                   | [cisco_acs.yaml](/backend/config/vendors/cisco_acs.yaml)                         |                                        |
-| Cisco        | AireOS                | [cisco_aireos.yaml](/backend/config/vendors/cisco_aireos.yaml)                   | [AireOS](#cisco-aireos)                |
-| Cisco        | IOS                   | [cisco_ios.yaml](/backend/config/vendors/cisco_ios.yaml)                         |                                        |
-| Cisco        | IOS-XR                | [cisco_iosxr.yaml](/backend/config/vendors/cisco_iosxr.yaml)                     |                                        |
-| Cisco        | NXOS                  | [cisco_nxos.yaml](/backend/config/vendors/cisco_nxos.yaml)                       |                                        |
-| Cisco        | ASA                   | [cisco_asa.yaml](/backend/config/vendors/cisco_asa.yaml)                         |                                        |
-| Citrix       | NetScaler             | [citrix_netscaler.yaml](/backend/config/vendors/citrix_netscaler.yaml)           |                                        |
-| Eltex        | Eltex                 | [eltex_eltex.yaml](/backend/config/vendors/eltex_eltex.yaml)                     |                                        |
-| Fortinet     | FortiGate             | [fortinet_fortigate.yaml](/backend/config/vendors/fortinet_fortigate.yaml)       | [FortiGate](#fortinet-device-types)    |
-| Fortinet     | FortiOS               | [fortinet_fortios.yaml](/backend/config/vendors/fortinet_fortios.yaml)           | [FortiOS](#fortinet-device-types)      |
-| HP           | ProCurve              | [hp_procurve.yaml](/backend/config/vendors/hp_procurve.yaml)                     |                                        |
-| Juniper      | JunOS                 | [juniper_junos.yaml](/backend/config/vendors/juniper_junos.yaml)                 | [JunOS](#juniper-junos)                |
-| OpenWRT      |                       | [openwrt.yaml](/backend/config/vendors/openwrt.yaml)                             |                                        |
-| OPNsense     |                       | [opnsense.yaml](/backend/config/vendors/opnsense.yaml)                           |                                        |
-| Palo Alto    | PanOS                 | [paloalto_panos.yaml](/backend/config/vendors/paloalto_panos.yaml)               |                                        |
-| Perle        | IOLAN Console Servers | [perle_iolan.yaml](/backend/config/vendors/perle_iolan.yaml)                     |                                        |
-| pfSense      |                       | [pfsense.yaml](/backend/config/vendors/pfsense.yaml)                             |                                        |
-| SONiC        | Enterprise SONiC      | [sonic_enterprise.yaml](/backend/config/vendors/sonic_enterprise.yaml)           |                                        |
-| TrueNAS      |                       | [truenas.yaml](/backend/config/vendors/truenas.yaml)                             | [TrueNAS](#truenas)                    |
-| Ubiquiti     | UniFi                 | [ubiquiti_unifi.yaml](/backend/config/vendors/ubiquiti_unifi.yaml)               | [Ubiquiti](#ubiquiti)                  |
-| Watchguard   | FirewareOS            | [watchguard_firewareos.yaml](/backend/config/vendors/watchguard_firewareos.yaml) |                                        |
+| Vendor            | OS/Device Type        | YAML file                                                                        | Notes                                  |
+| ----------------- | --------------------- | -------------------------------------------------------------------------------- | -------------------------------------- |
+| A10 Networks      | A10 ACOS              | [a10_acos.yaml](/backend/config/vendors/a10_acos.yaml)                           |                                        |
+| Alcatel-Lucent    | AOS                   | [alcatel_aos.yaml](/backend/config/vendors/alcatel_aos.yaml)                     | AOS6 - vxworks-based                   |
+| Alcatel-Lucent    | AOS7                  | [alcatel_aos7.yaml](/backend/config/vendors/alcatel_aos7.yaml)                   | AOS7 and AOS8 - Linux-based            |
+| Alcatel-Lucent    | ISAM                  | [alcatel_isam.yaml](/backend/config/vendors/alcatel_isam.yaml)                   |                                        |
+| Alcatel-Lucent    | SROS                  | [alcatel_sros.yaml](/backend/config/vendors/alcatel_sros.yaml)                   | Formerly TiMOS                         |
+| Alcatel-Lucent    | Wireless              | [aruba_aosw.yaml](/backend/config/vendors/aruba_aosw.yaml)                       | Same model as Arube Wireless (AOS-W)   |
+| Arista            | EOS                   | [arista_eos.yaml](/backend/config/vendors/arista_eos.yaml)                       |                                        |
+| Aruba             | AOS-CX                | [aruba_aoscx.yaml](/backend/config/vendors/aruba_aoscx.yaml)                     | [AOS-CX](#hpe-aruba-networking)        |
+| Aruba             | AOS-W                 | [aruba_aosw.yaml](/backend/config/vendors/aruba_aosw.yaml)                       | [AOS-W](#hpe-aruba-networking)         |
+| Aruba             | IAP/Instant           | [aruba_iap.yaml](/backend/config/vendors/aruba_iap.yaml)                         | [Aruba Instant](#hpe-aruba-networking) |
+| Casa              | Casa                  | [casa_casa.yaml](/backend/config/vendors/casa_casa.yaml)                         |                                        |
+| Cisco             | ACS                   | [cisco_acs.yaml](/backend/config/vendors/cisco_acs.yaml)                         |                                        |
+| Cisco             | AireOS                | [cisco_aireos.yaml](/backend/config/vendors/cisco_aireos.yaml)                   | [AireOS](#cisco-aireos)                |
+| Cisco             | IOS                   | [cisco_ios.yaml](/backend/config/vendors/cisco_ios.yaml)                         |                                        |
+| Cisco             | IOS-XR                | [cisco_iosxr.yaml](/backend/config/vendors/cisco_iosxr.yaml)                     |                                        |
+| Cisco             | NXOS                  | [cisco_nxos.yaml](/backend/config/vendors/cisco_nxos.yaml)                       |                                        |
+| Cisco             | ASA                   | [cisco_asa.yaml](/backend/config/vendors/cisco_asa.yaml)                         |                                        |
+| Citrix            | NetScaler             | [citrix_netscaler.yaml](/backend/config/vendors/citrix_netscaler.yaml)           |                                        |
+| Eltex             | Eltex                 | [eltex_eltex.yaml](/backend/config/vendors/eltex_eltex.yaml)                     |                                        |
+| Fortinet          | FortiGate             | [fortinet_fortigate.yaml](/backend/config/vendors/fortinet_fortigate.yaml)       | [FortiGate](#fortinet-device-types)    |
+| Fortinet          | FortiOS               | [fortinet_fortios.yaml](/backend/config/vendors/fortinet_fortios.yaml)           | [FortiOS](#fortinet-device-types)      |
+| HP                | ProCurve              | [hp_procurve.yaml](/backend/config/vendors/hp_procurve.yaml)                     |                                        |
+| Juniper           | JunOS                 | [juniper_junos.yaml](/backend/config/vendors/juniper_junos.yaml)                 | [JunOS](#juniper-junos)                |
+| OpenWRT           |                       | [openwrt.yaml](/backend/config/vendors/openwrt.yaml)                             |                                        |
+| OPNsense          |                       | [opnsense.yaml](/backend/config/vendors/opnsense.yaml)                           |                                        |
+| Palo Alto         | PanOS                 | [paloalto_panos.yaml](/backend/config/vendors/paloalto_panos.yaml)               |                                        |
+| Perle             | IOLAN Console Servers | [perle_iolan.yaml](/backend/config/vendors/perle_iolan.yaml)                     |                                        |
+| pfSense           |                       | [pfsense.yaml](/backend/config/vendors/pfsense.yaml)                             |                                        |
+| SONiC             | Enterprise SONiC      | [sonic_enterprise.yaml](/backend/config/vendors/sonic_enterprise.yaml)           |                                        |
+| TrueNAS           |                       | [truenas.yaml](/backend/config/vendors/truenas.yaml)                             | [TrueNAS](#truenas)                    |
+| Ubiquiti          | UniFi                 | [ubiquiti_unifi.yaml](/backend/config/vendors/ubiquiti_unifi.yaml)               | [Ubiquiti](#ubiquiti)                  |
+| Watchguard        | FirewareOS            | [watchguard_firewareos.yaml](/backend/config/vendors/watchguard_firewareos.yaml) |                                        |
 
 ---
 
