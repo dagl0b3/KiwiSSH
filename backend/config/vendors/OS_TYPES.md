@@ -29,6 +29,7 @@
 | Fortinet          | FortiWLC              | [fortinet_wlc.yaml](/backend/config/vendors/fortinet_wlc.yaml)                   |                                        |
 | HP                | ProCurve              | [hp_procurve.yaml](/backend/config/vendors/hp_procurve.yaml)                     |                                        |
 | Juniper           | JunOS                 | [juniper_junos.yaml](/backend/config/vendors/juniper_junos.yaml)                 | [JunOS](#juniper-junos)                |
+| Mikrotik          | RouterOS              | [mikrotik_routeros.yaml](/backend/config/vendors/mikrotik_routeros.yaml)         | [RouterOS](#mikrotik-routeros)         |
 | Motorola          | RFS                   | [motorola_rfs.yaml](/backend/config/vendors/motorola_rfs.yaml)                   |                                        |
 | OpenWRT           |                       | [openwrt.yaml](/backend/config/vendors/openwrt.yaml)                             |                                        |
 | OPNsense          |                       | [opnsense.yaml](/backend/config/vendors/opnsense.yaml)                           |                                        |
@@ -109,6 +110,19 @@ Create a user with `cfg-view` class set:
 set system login user kiwissh class cfg-view
 set system login user kiwissh authentication plain-text-password "yourpasswordhere"
 ```
+
+## MikroTik RouterOS
+
+RouterOS 7.12 and later support ED25519 keys.
+
+Create a key pair, save the public key (id_ed25519.pub) and save it on flash. Create a user and attach the public key.
+
+```bash
+[admin@mikrotik] > /user add name=kiwissh group=read disabled=no
+[admin@mikrotik] > /user ssh-keys import public-key-file=id_ed25519.pub user=kiwissh
+```
+
+KiwiSSH can now retrieve your configuration!
 
 ## TrueNAS
 
