@@ -81,7 +81,7 @@ The backend provides:
 
 # Supported OS/Device Types
 
-For a detailed overview of supported OS/Device types, please refer to the [OS_TYPES.md](OS_TYPES.md) file.
+For a detailed overview of supported OS/Device types, please refer to the [OS_TYPES.md](/backend/config/vendors/OS_TYPES.md) file.
 
 # Screenshots
 
