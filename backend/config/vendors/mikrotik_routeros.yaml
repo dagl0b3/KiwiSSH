@@ -42,6 +42,7 @@ processing:
     - '# inactive time\r\n'
     - '# received packet from \S+ bad format\r\n'
     - '# poe-out status: short_circuit\r\n'
+    - '# poe-out status: voltage_on_poe-in\r\n'
     - '# Firmware upgraded successfully, please reboot for changes to take effect!\r\n'
     - '# \S+ not ready\r\n'
     - '# .+ please restart the device in order to apply the new setting\r\n'
