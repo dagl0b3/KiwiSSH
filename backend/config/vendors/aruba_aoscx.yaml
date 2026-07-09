@@ -10,6 +10,13 @@ vendor:
 session:
   comment_prefix: "! "
   prompt: '^[\w\s.-]+[#>] $'
+  pagination:
+    enabled: true
+    patterns:
+      - pattern: 'Press any key to continue$'
+        response: " "
+      - pattern: 'Enter switch number'
+        response: "\n"
 
 ### Commands to execute for backup
 ## Supported step types in command phases:
@@ -21,12 +28,14 @@ commands:
   pre_backup:
     - command: "enable"
       then: ["{{ enable_password }}"]
-    - command: "terminal length 0"
+    - command: "no page"
 
   ### Main backup command(s)
   ## Commands whose output becomes the stored configuration
   backup:
     - command: "show version"
+      metadata: true
+    - command: "show environment"
       metadata: true
     - command: "show module"
       metadata: true
