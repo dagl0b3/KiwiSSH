@@ -50,6 +50,22 @@ def _normalize_protocol(value: str | None, *, allow_none: bool) -> str | None:
     return text
 
 
+def _resolve_config_dir() -> Path:
+    """Resolve the default configuration directory.
+
+    Prefers the Docker mount point `/config` when it exists (container deployments).
+    Otherwise falls back to the resolved relative `config` directory on bare metal deployments.
+
+    The location can always be overridden via the `KIWISSH_CONFIG_DIR` environment variable.
+    """
+    docker_config_dir = Path("/config")
+    if docker_config_dir.exists():
+        return docker_config_dir
+
+    ### Will resolve three (parents[0,1,2]) directories up from this file
+    return Path(__file__).resolve().parents[2] / "config"
+
+
 ### =====================================================================
 
 class ApiConfig(BaseModel):
@@ -644,10 +660,10 @@ class Settings(BaseSettings):
     )
 
     ### Paths
-    config_dir: Path = Field(default=Path("/config"))
+    config_dir: Path = Field(default_factory=_resolve_config_dir)
 
     ### Testing
-    local_test_mode: bool = Field(default=False, description="Use /config for local testing")
+    local_test_mode: bool = Field(default=False, description="Enforce config values for easier local testing")
 
     ### Configuration sections (loaded from YAML)
     app: AppConfig = Field(default_factory=AppConfig)
@@ -670,9 +686,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def use_test_config_if_enabled(self) -> "Settings":
-        """If LOCAL_TEST_MODE=true, use /config for local testing."""
+        """If LOCAL_TEST_MODE=true, use the default config location for local testing."""
         if self.local_test_mode:
-            self.config_dir = Path("/config")
+            self.config_dir = _resolve_config_dir()
 
         return self
 

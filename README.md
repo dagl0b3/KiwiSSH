@@ -143,8 +143,15 @@ KiwiSSH can be configured using a combination of environment variables and a [YA
 
 See the example [`backend/.env.example`](backend/.env.example) file. Either rename it to `.env` and fill in the values or set the environment variables directly in your deployment environment (e.g. Docker, systemd, etc.). KiwiSSH will automatically load these environment variables on startup.
 
+> [!TIP]
+> Environment variables always take precedence over the defaults defined in `config.py`.
+
+> [!WARNING]
+> Only the operational top-level settings in the `config.py` file can be overridden by environment variables. Nested and re-computed fields like `database_url` cannot be overridden!
+
 | Variable Name | Description | Required | Default Value |
 | ------------- | ----------- | -------- | ------------- |
+| `KIWISSH_CONFIG_DIR` | Directory KiwiSSH reads its configuration from (`kiwissh.yaml`, `ssh_profiles.yaml`, `vendors/`). Defaults to `/config` in Docker, or the backend's bundled `config/` directory on bare-metal installs. | No | `/config` (Docker) / `../backend/config` (bare-metal) |
 | `KIWISSH_LOCAL_TEST_MODE` | If set to true, the application will run in local test mode, which enforces certain config values for easier local testing and development. | No | `false` |
 | `TZ` | Timezone for the application. This is used for timestamps in backup job logs and Git commit messages. | **No** | `UTC` |
 
