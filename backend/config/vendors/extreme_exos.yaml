@@ -1,0 +1,121 @@
+### Extreme Network EXOS Vendor Configuration
+## Instructions for backing up Extreme Network running EXOS devices
+
+vendor:
+  id: "extreme_exos"
+  name: "Extreme Networks EXOS"
+  description: "Extreme Networks EXOS devices (routers, switches)"
+
+### Session-level behavior
+session:
+  comment_prefix: "#"
+  prompt: '^([\w.@()-]+ [#>]\s?)$'
+
+### Commands to execute for backup
+## Supported step types in command phases:
+## - command: sends command text
+## - command + then: sends command text, then sends interactive input
+commands:
+  ### Pre-backup commands (prepare the session) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  pre_backup:
+    - command: "disable clipaging"
+#    - command: "terminal width 0"
+
+  ### Main backup command(s)
+  ## Commands whose output becomes the stored configuration
+  backup:
+#    - command: "show version"
+#      description: "Collect platform as metadata"
+#      metadata: true
+#    - command: "show inventory"
+#      description: "Collect inventory as metadata"
+#      metadata: true
+#    - command: "show vtp status"
+#      description: "Collect VTP as metadata"
+#      metadata: true
+    - command: "show configuration"
+      description: "Get running configuration"
+
+  ### Post-backup commands (cleanup) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  post_backup:
+#    - command: "terminal length 24"
+#      description: "Restore paging"
+    - command: "exit"
+
+### Configuration processing rules
+## Processing reduces diff noise and trims non-config boilerplate
+processing:
+  ### Lines to strip from captured config (regex patterns)
+  strip_patterns:
+#    - "^% Invalid input detected at '\\^' marker\\.$"
+#    - "^\\s+\\^$"
+#    - "^Building configuration\\.\\.\\."
+#    - "^Current configuration\\s*:\\s*\\d+\\s*bytes"
+#    - "^!\\s*Last configuration change"
+#    - "^!\\s*NVRAM config last updated"
+#    - "^ntp clock-period \\d+"
+#    - '^ (tunnel mpls traffic-eng bandwidth [^\n]*)\n((?: [^\n]*\n)* tunnel mpls traffic-eng auto-bw)'
+#    - 'Time source is.*'
+#    - 'Load for.*'
+
+  ### Lines that mark config boundaries
+  ## If either boundary is missing, keep from/to the file edge.
+  # config_start: "^version \\d+\\.\\d+"
+  # config_end: "^end$"
+
+  ### Secret masking. When enabled=false, no redaction is applied.
+  redaction:
+    enabled: false
+    patterns:
+      - search: "^(snmp-server community).*"
+        replacement: "\\1 <configuration removed>"
+      - search: "^(snmp-server host \\S+( vrf \\S+)?( informs?)?( version (1|2c))?) +\\S+( .*)?$"
+        replacement: "\\1 <secret hidden>\\6"
+      - search: "^(username .+ (password|secret) \\d) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^(enable (password|secret)( level \\d+)? \\d) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +(?:password|secret)) (?:\\d )?\\S+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^(.*wpa-psk ascii \\d) (\\S+)"
+        replacement: "\\1 <secret hidden>"
+      - search: "^(.*key 7) (\\d.+)"
+        replacement: "\\1 <secret hidden>"
+      - search: "^(tacacs-server (.+ )?key) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^(crypto isakmp key) (\\S+) (.*)"
+        replacement: "\\1 <secret hidden> \\3"
+      - search: "^( +ip ospf message-digest-key \\d+ md5) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +ip ospf authentication-key) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +neighbor \\S+ password) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +vrrp \\d+ authentication text) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +standby \\d+ authentication) .{1,8}$"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +standby \\d+ authentication md5 key-string) .+?( timeout \\d+)?$"
+        replacement: "\\1 <secret hidden> \\2"
+      - search: "^( +key-string) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^((tacacs|radius) server [^\\n]+\\n( +[^\\n]+\\n)* +key) [^\\n]+$"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +ppp (chap|pap) password \\d) .+"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +security wpa psk set-key (?:ascii|hex) \\d) (.*)$"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +dot1x username \\S+ password \\d) (.*)$"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +mgmtuser username \\S+ password \\d) (.*) (secret \\d) (.*)$"
+        replacement: "\\1 <secret hidden> \\3 <secret hidden>"
+      - search: "^( +client \\S+ server-key \\d) (.*)$"
+        replacement: "\\1 <secret hidden>"
+      - search: "^( +domain-password) \\S+ ?(.*)"
+        replacement: "\\1 <secret hidden> \\2"
+      - search: "^( +pre-shared-key).*"
+        replacement: "\\1 <configuration removed>"
+      - search: "^(.*server-key(?: \\d)?) \\S+"
+        replacement: "\\1 <secret hidden>"
