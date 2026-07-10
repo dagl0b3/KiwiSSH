@@ -593,10 +593,11 @@ class HttpSourceConfig(BaseModel):
 class SourcesConfig(BaseModel):
     """Device source definitions."""
     file: str | None = None
+    ansible: str | None = None
     postgres: PostgresSourceConfig | None = None
     http: HttpSourceConfig | None = None
 
-    @field_validator("file", mode="before")
+    @field_validator("file", "ansible", mode="before")
     @classmethod
     def normalize_file_source_path(cls, value: str | None) -> str | None:
         """Normalize sources.file.
@@ -614,11 +615,12 @@ class SourcesConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_exactly_one_source(self) -> "SourcesConfig":
-        """Require exactly one configured device source: file, postgres or http."""
+        """Require exactly one configured device source: file, ansible, postgres or http."""
         configured = [
             name
             for name, value in (
                 ("file", self.file),
+                ("ansible", self.ansible),
                 ("postgres", self.postgres),
                 ("http", self.http),
             )
@@ -627,7 +629,7 @@ class SourcesConfig(BaseModel):
 
         if len(configured) > 1:
             raise ValueError(
-                "Configure only one source under 'sources': one of 'file', 'postgres' or 'http', "
+                "Configure only one source under 'sources': one of 'file', 'ansible', 'postgres' or 'http', "
                 f"not multiple ({', '.join(configured)})"
             )
 
