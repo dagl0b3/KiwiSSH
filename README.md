@@ -343,20 +343,8 @@ sources:
 
 > [!TIP]
 > Since the HTTP source is generic, you can use it to load devices from any system that can provide a JSON array of devices. For example, you could use LibreNMS, NetBox, or any other inventory system that has an API endpoint returning device information in JSON format.
->
-> Example for LibreNMS `/oxidized` endpoint (no PR to establish a `/kiwissh` endpoint yet):
->
->```yaml
->sources:
->  http:
->    url: "http://librenms/api/v0/oxidized"
->    headers:
->      X-Auth-Token: "1d73fabef8a44f5714b585cf0xxxxx"
->    map:
->      device_name: hostname
->      ip_address: ip
->    default_group: "core-switches"
->```
+> 
+> See how to [implement LibreNMS support here](https://github.com/casudo/KiwiSSH/discussions/44).
 
 ### git
 
