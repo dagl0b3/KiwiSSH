@@ -110,7 +110,7 @@ To run KiwiSSH on your local machine without Docker, follow these steps:
 
 1. Clone the repository
 2. Navigate to the backend directory and install the required Python dependencies from `requirements.txt`
-3. Set up the `kiwissh.yaml` configuration file in the `config/` directory
+3. Copy [`kiwissh.yaml.example`](backend/config/kiwissh.yaml.example) to `config/kiwissh.yaml` and configure it
 4. Run the backend using `python entrypoint.py`
 5. Navigate to the frontend directory and install the dependencies with `npm install`
 6. Start the frontend with `npm run dev`
@@ -137,20 +137,28 @@ KiwiSSH uses separate Docker images for backend and frontend.
 
 # Configuration
 
-KiwiSSH can be configured using a combination of environment variables and a [YAML configuration file](config/kiwissh.yaml). The YAML file contains the main configuration settings, while environment variables are used to define global, application-unspecific values for different deployments.
+KiwiSSH can be configured using a combination of environment variables and a [YAML configuration file](backend/config/kiwissh.yaml.example). The YAML file contains the main configuration settings, while environment variables are used to define global, application-unspecific values for different deployments.
 
 ## Environment Variables
 
 See the example [`backend/.env.example`](backend/.env.example) file. Either rename it to `.env` and fill in the values or set the environment variables directly in your deployment environment (e.g. Docker, systemd, etc.). KiwiSSH will automatically load these environment variables on startup.
 
+> [!TIP]
+> Environment variables always take precedence over the defaults defined in `config.py`.
+
+> [!WARNING]
+> Only the operational top-level settings in the `config.py` file can be overridden by environment variables. Nested and re-computed fields like `database_url` cannot be overridden!
+
 | Variable Name | Description | Required | Default Value |
 | ------------- | ----------- | -------- | ------------- |
+| `KIWISSH_CONFIG_DIR` | Directory KiwiSSH reads its configuration from (`kiwissh.yaml`, `ssh_profiles.yaml`, `vendors/`). Defaults to `/config` in Docker, or the backend's bundled `config/` directory on bare-metal installs. | No | `/config` (Docker) / `../backend/config` (bare-metal) |
 | `KIWISSH_LOCAL_TEST_MODE` | If set to true, the application will run in local test mode, which enforces certain config values for easier local testing and development. | No | `false` |
 | `TZ` | Timezone for the application. This is used for timestamps in backup job logs and Git commit messages. | **No** | `UTC` |
 
 ## kiwissh.yaml
 
-> Found at [/config/kiwissh.yaml](config/kiwissh.yaml)
+> [!IMPORTANT]
+> Make sure to rename the example file [`kiwissh.yaml.example`](backend/config/kiwissh.yaml.example) to `kiwissh.yaml`. Your `kiwissh.yaml` is git-ignored so it won't conflict with future `git pull`s.
 
 Below you'll find a detailed overview of all available configuration options in the `kiwissh.yaml` file. This file is the main configuration file for KiwiSSH and contains settings for the application, database connection, device sources, git integration, groups and nodes.
 
@@ -228,7 +236,7 @@ Configure where KiwiSSH load the devices to backup from. You can choose between 
 
 | Key | Description | Required | Default Value |
 | --- | ----------- | -------- | ------------- |
-| `sources.file` | The absolute path to the CSV file containing the device entries. | **Yes** | - |
+| `sources.file` | Path to the CSV file containing the device entries. Absolute, or relative to the config directory. | **Yes** | - |
 
 The devices will be loaded from the specified CSV file. The headers must be seperated by commas like this:
 
@@ -277,7 +285,7 @@ KiwiSSH will always store the device configurations in local git repositories to
 
 | Key | Description | Required | Default Value |
 | --- | ----------- | -------- | ------------- |
-| `git.local_path` | The local path where the git repositories for the device groups will be stored. | No | `/config/backups` |
+| `git.local_path` | The local path where the git repositories for the device groups will be stored. Absolute, or relative to the config directory. | No | `/config/backups` |
 | `git.commit_message_template` | The global template for the git commit messages. Available placeholders: `{group}`, `{device_name}`, `{timestamp}`. | No | `"Backup: {group}/{device_name} at {timestamp}"` |
 | `git.remote.url` | The global remote git repository URL. Available placeholders: `{group}`. This can be overridden for specific groups. | No | - |
 | `git.remote.branch` | The global remote git branch to push to. This can be overridden for specific groups. | No | `main` |
