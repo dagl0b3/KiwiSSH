@@ -119,7 +119,7 @@ class SourceService:
         """Recursively collect device rows from an Ansible inventory group node.
 
         A device's group is the immediate Ansible group under which it is listed in 'hosts'.
-        The connection IP is taken from 'ansible_host', falling back to the inventory hostname when that variable is absent.
+        The connection IP is taken from 'ansible_host'.
         """
         if not isinstance(group_data, dict):
             return
@@ -129,7 +129,7 @@ class SourceService:
             ### Scan through all hosts in the group
             for host_name, host_vars in hosts.items():
                 host_vars = host_vars if isinstance(host_vars, dict) else {}
-                ip_address = str(host_vars.get("ansible_host") or host_name).strip()
+                ip_address = str(host_vars.get("ansible_host")).strip()
                 ### Map Ansible inventory hosts to canonical KiwiSSH device rows
                 rows.append(
                     {
@@ -157,7 +157,7 @@ class SourceService:
         """Load devices from an Ansible inventory YAML file.
 
         Ansible groups (under 'all.children') map to KiwiSSH groups and must exist in kiwissh.yaml.
-        Each host under a groups 'hosts' becomes a device, using 'ansible_host' as the IP (or the hostname if unset).
+        Each host under a groups 'hosts' becomes a device, using 'ansible_host' as the IP.
         """
         inventory_path = self._get_ansible_source_path()
 
@@ -175,7 +175,7 @@ class SourceService:
         ### Parse Ansible inventory and cache devices
         rows = self._parse_ansible_inventory(data)
         for index, row in enumerate(rows, start=1):
-            self._cache_device_from_row(row, f"{row.get('device_name') or 'host'}#{index}")
+            self._cache_device_from_row(row, f"ansible#{index}")
 
         self._loaded = True
         return list(self._devices_cache.values())
