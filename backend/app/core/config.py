@@ -600,7 +600,7 @@ class SourcesConfig(BaseModel):
     @field_validator("file", "ansible", mode="before")
     @classmethod
     def normalize_file_source_path(cls, value: str | None) -> str | None:
-        """Normalize sources.file.
+        """Normalize file sources.
 
         Accepts absolute or relative paths.
         Relative paths are resolved against the configuration directory later (Settings._resolve_config_relative_path).
@@ -635,7 +635,7 @@ class SourcesConfig(BaseModel):
 
         if not configured:
             raise ValueError(
-                "One source is required under 'sources': configure either 'file', 'postgres' or 'http'"
+                "One source is required under 'sources': configure either 'file', 'ansible', 'postgres' or 'http'"
             )
 
         return self
