@@ -43,7 +43,8 @@
 | TrueNAS           |                       | [truenas.yaml](/backend/config/vendors/truenas.yaml)                             | [TrueNAS](#truenas)                                                |
 | Ubiquiti          | UniFi                 | [ubiquiti_unifi.yaml](/backend/config/vendors/ubiquiti_unifi.yaml)               | [Ubiquiti](#ubiquiti)                                              |
 | VyOS Networks     | VyOS                  | [vyos_vyos.yaml](/backend/config/vendors/vyos_vyos.yaml)                         | Fork of Vyatta, tracking the supported versions (>= 1.4.x)         |
-| Watchguard        | FirewareOS            | [watchguard_firewareos.yaml](/backend/config/vendors/watchguard_firewareos.yaml) |                                                                    |
+| Watchguard        | FirewareOS            | [watchguard_firewareos.yaml](/backend/config/vendors/watchguard_firewareos.yaml) |
+| Westermo          | WeOS                  | [westermo_weos.yaml](/backend/config/vendors/westermo_weos.yaml)                 |                                                                    |
 
 ---
 
