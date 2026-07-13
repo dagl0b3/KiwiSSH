@@ -55,6 +55,9 @@
 | Cisco | UCS | [cisco_ucs.yaml](/backend/config/vendors/cisco_ucs.yaml) | |
 | Cisco | Viptela | [cisco_viptela.yaml](/backend/config/vendors/cisco_viptela.yaml) | |
 | Citrix            | NetScaler             | [citrix_netscaler.yaml](/backend/config/vendors/citrix_netscaler.yaml)           |                                                                    |
+| Coriant (former Tellabs) | TMOS (8800) | [coriant_tmos.yaml](/backend/config/vendors/coriant_tmos.yaml) | |
+| Coriant (former Tellabs) | 8600 | [coriant_8600.yaml](/backend/config/vendors/coriant_8600.yaml) | |
+| Coriant (former Tellabs) | Groove | [coriant_groove.yaml](/backend/config/vendors/coriant_groove.yaml) | |
 | D-Link            | D-Link                | [dlink_dlink.yaml](/backend/config/vendors/dlink_dlink.yaml)                     |                                                                    |
 | D-Link            | D-Link NextGen        | [dlink_dlinknextgen.yaml](/backend/config/vendors/dlink_dlinknextgen.yaml)       | Cisco-like CLI                                                     |
 | Eltex             | Eltex                 | [eltex_eltex.yaml](/backend/config/vendors/eltex_eltex.yaml)                     |                                                                    |
