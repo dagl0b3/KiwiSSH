@@ -1,0 +1,51 @@
+### Cisco Viptela Vendor Configuration
+## Instructions for backing up Cisco Viptela devices
+
+vendor:
+  id: "cisco_viptela"
+  name: "Cisco Viptela"
+  description: "Cisco Viptela"
+
+### Session-level output behavior.
+session:
+  comment_prefix: "! "
+  prompt: '[-\w]+#\s$'
+
+### Commands to execute for backup
+## Supported step types in command phases:
+## - command: sends command text
+## - command + then: sends command text, then sends interactive input
+commands:
+  ### Pre-backup commands (prepare the session) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  pre_backup:
+    - command: "paginate false"
+
+  ### Main backup command(s)
+  ## Commands whose output becomes the stored configuration
+  backup:
+    - command: "show version"
+      metadata: true
+    - command: "show running-config"
+      show_command_in_config: true
+
+  ### Post-backup commands (cleanup) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  post_backup:
+    - command: "exit"
+      
+### Configuration processing rules
+## Processing reduces diff noise and trims non-config boilerplate
+processing:
+  # strip_patterns:
+  #   - '(^((.*)[Ss]ystem [Uu]ptime(.*))$)'
+  # config_start: "^config "
+  # config_end: "^end$"
+  ### Secret masking. When enabled=false, no redaction is applied.
+  redaction:
+    enabled: false
+    patterns:
+      - search: '(^\s+secret-key|password|auth-password|priv-password)\s+.*$'
+        replacement: '\1<secret hidden>'
+      - search: '(^\s+community)\s.*$'
+        replacement: '\1 <secret hidden>'

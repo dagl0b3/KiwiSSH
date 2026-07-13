@@ -46,6 +46,14 @@
 | Cisco             | IOS-XR                | [cisco_iosxr.yaml](/backend/config/vendors/cisco_iosxr.yaml)                     |                                                                    |
 | Cisco             | NXOS                  | [cisco_nxos.yaml](/backend/config/vendors/cisco_nxos.yaml)                       |                                                                    |
 | Cisco             | ASA                   | [cisco_asa.yaml](/backend/config/vendors/cisco_asa.yaml)                         |                                                                    |
+| Cisco | AsyncOS | [cisco_asyncos.yaml](/backend/config/vendors/cisco_asyncos.yaml) | |
+| Cisco | CatOS | [cisco_catos.yaml](/backend/config/vendors/cisco_catos.yaml) | |
+| Cisco | ExaLink Fusion (Nexus 3550-F) | [cisco_exalink.yaml](/backend/config/vendors/cisco_exalink.yaml) | [Cisco ExaLink](#cisco-nexus-3550-f-exalink-fusion) |
+| Cisco | NGA | [cisco_nga.yaml](/backend/config/vendors/cisco_nga.yaml) | |
+| Cisco | SMA | [cisco_sma.yaml](/backend/config/vendors/cisco_sma.yaml) |  |
+| Cisco | SMB (Nikola series) | [cisco_smb.yaml](/backend/config/vendors/cisco_smb.yaml) |  |
+| Cisco | UCS | [cisco_ucs.yaml](/backend/config/vendors/cisco_ucs.yaml) | |
+| Cisco | Viptela | [cisco_viptela.yaml](/backend/config/vendors/cisco_viptela.yaml) | |
 | Citrix            | NetScaler             | [citrix_netscaler.yaml](/backend/config/vendors/citrix_netscaler.yaml)           |                                                                    |
 | D-Link            | D-Link                | [dlink_dlink.yaml](/backend/config/vendors/dlink_dlink.yaml)                     |                                                                    |
 | D-Link            | D-Link NextGen        | [dlink_dlinknextgen.yaml](/backend/config/vendors/dlink_dlinknextgen.yaml)       | Cisco-like CLI                                                     |
@@ -92,6 +100,19 @@ Create a user with read-write privilege:
 `mgmtuser add kiwissh **** read-write`
 
 KiwiSSH needs read-write privilege in order to execute `config paging disable`.
+
+## Cisco Nexus 3550-F (ExaLink Fusion)
+
+The Cisco Nexus 3550-F (formerly Exablaze ExaLink Fusion) is an ultra-low-latency Layer 1/2 switch platform based on FPGA technology, primarily used in high-frequency trading and HPC environments. It runs a custom Linux-based OS with a proprietary CLI and JSON RPC API.
+
+### Device Configuration
+
+Create a read-only user for KiwiSSH on the device:
+
+```bash
+admin@N3550-F> configure user kiwissh password <password>
+admin@N3550-F> configure user kiwissh privilege read-only
+```
 
 ## Fortinet device types
 
