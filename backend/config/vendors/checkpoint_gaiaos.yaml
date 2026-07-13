@@ -1,0 +1,63 @@
+### Check Point GaiaOS Vendor Configuration
+## Instructions for backing up Check Point GaiaOS devices
+
+vendor:
+  id: "checkpoint_gaiaos"
+  name: "Check Point GaiaOS"
+  description: "Check Point GaiaOS devices"
+
+### Session-level output behavior.
+session:
+  comment_prefix: "# "
+  prompt: '^([\[\]\w.@:-]+[#>]\s?)$'
+
+### Commands to execute for backup
+## Supported step types in command phases:
+## - command: sends command text
+## - command + then: sends command text, then sends interactive input
+commands:
+  ### Pre-backup commands (prepare the session) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  pre_backup:
+    - command: "set clienv rows 0"
+
+  ### Main backup command(s)
+  ## Commands whose output becomes the stored configuration
+  backup:
+    - command: "show vsx"
+      metadata: true
+    - command: "show asset all"
+      metadata: true
+    - command: "show version all"
+      metadata: true
+    - command: "show configuration"
+      show_command_in_config: true
+
+  ### Post-backup commands (cleanup) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  post_backup:
+    - command: "exit"
+      
+### Configuration processing rules
+## Processing reduces diff noise and trims non-config boilerplate
+processing:
+  strip_patterns:
+    - '^# Exported by \S+ on .*'
+  # config_start: "^config "
+  # config_end: "^end$"
+  ### Secret masking. When enabled=false, no redaction is applied.
+  redaction:
+    enabled: false
+    patterns:
+      - search: '^(set expert-password-hash ).*'
+        replacement: '\1<EXPERT PASSWORD REMOVED>'
+      - search: '^(set user \S+ password-hash ).*'
+        replacement: '\1<USER PASSWORD REMOVED>'
+      - search: '^(set ospf .* secret ).*'
+        replacement: '\1<OSPF KEY REMOVED>'
+      - search: '^(set snmp community )(.*)( read-only.*)'
+        replacement: '\1<SNMP COMMUNITY REMOVED>\3'
+      - search: '^(add snmp .* community )(.*)(\S?.*)'
+        replacement: '\1<SNMP COMMUNITY REMOVED>\3'
+      - search: '(auth|privacy)(-pass-phrase-hashed )(\S*)'
+        replacement: '\1-pass-phrase-hashed <SNMP PASS-PHRASE REMOVED>'

@@ -37,6 +37,7 @@
 | Cambium | Cambium ePMP | [cambium_epmp.yaml](/backend/config/vendors/cambium_epmp.yaml) | ePMP series |
 | Casa              | Casa                  | [casa_casa.yaml](/backend/config/vendors/casa_casa.yaml)                         |                                                                    |
 | Centec Networks | CNOS | [centec_cnos.yaml](/backend/config/vendors/centec_cnos.yaml) | |
+| Check Point | GaiaOS | [checkpoint_gaiaos.yaml](/backend/config/vendors/checkpoint_gaiaos.yaml) | |
 | Cisco             | ACS                   | [cisco_acs.yaml](/backend/config/vendors/cisco_acs.yaml)                         |                                                                    |
 | Cisco             | AireOS                | [cisco_aireos.yaml](/backend/config/vendors/cisco_aireos.yaml)                   | [AireOS](#cisco-aireos)                                            |
 | Cisco             | IOS                   | [cisco_ios.yaml](/backend/config/vendors/cisco_ios.yaml)                         |                                                                    |
