@@ -16,6 +16,7 @@
 | Alcatel-Lucent    | Wireless              | [aruba_aosw.yaml](/backend/config/vendors/aruba_aosw.yaml)                       | Same model as Arube Wireless (AOS-W)                               |
 | Allied Telesis | Alliedware Plus | [alliedtelesis_awplus.yaml](/backend/config/vendors/alliedtelesis_awplus.yaml) |                  |
 | Allied Telesis | PowerConnect | [alliedtelesis_powerconnect.yaml](/backend/config/vendors/alliedtelesis_powerconnect.yaml) | AT-8000S, AT-8000GS series                 |
+| Arbor Networks     | ArbOS                 | [arbornetworks_arbos.yaml](/backend/config/vendors/arbornetworks_arbos.yaml)     |                                                                   |
 | Arista            | EOS                   | [arista_eos.yaml](/backend/config/vendors/arista_eos.yaml)                       |                                                                    |
 | Aruba             | AOS-CX                | [aruba_aoscx.yaml](/backend/config/vendors/aruba_aoscx.yaml)                     | [AOS-CX](#hpe-aruba-networking)                                    |
 | Aruba             | AOS-W                 | [aruba_aosw.yaml](/backend/config/vendors/aruba_aosw.yaml)                       | [AOS-W](#hpe-aruba-networking)                                     |
