@@ -1,0 +1,41 @@
+### Brocade FabricOS Vendor Configuration
+## Instructions for backing up Brocade FabricOS devices
+
+vendor:
+  id: "brocade_fabricos"
+  name: "Brocade FabricOS"
+  description: "Brocade FabricOS devices"
+
+### Session-level output behavior.
+session:
+  comment_prefix: "# "
+  prompt: '^(\w+:+\w+>\s)$'
+
+### Commands to execute for backup
+## Supported step types in command phases:
+## - command: sends command text
+## - command + then: sends command text, then sends interactive input
+commands:
+  ### Main backup command(s)
+  ## Commands whose output becomes the stored configuration
+  backup:
+    - command: "chassisShow"
+      metadata: true
+    - command: "configShow -all"
+      show_command_in_config: true
+
+### Configuration processing rules
+## Processing reduces diff noise and trims non-config boilerplate
+processing:
+  strip_patterns:
+    - 'Time Awake:'
+    - 'Power Usage'
+    - 'date ='
+  # config_start: "^config "
+  # config_end: "^end$"
+  ### Secret masking. When enabled=false, no redaction is applied.
+  redaction:
+    enabled: false
+    # patterns:
+    #   - search: "^(#private-encryption-key=).+"
+    #     replacement: "\\1<secret hidden>"

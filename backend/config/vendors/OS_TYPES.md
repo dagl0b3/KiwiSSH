@@ -24,6 +24,13 @@
 | Asterfusion | AsterNOS | [asterfusion_asternos.yaml](/backend/config/vendors/asterfusion_asternos.yaml) | |
 | AudioCodes | AudioCodes | [audiocodes_audiocodes.yaml](/backend/config/vendors/audiocodes_audiocodes.yaml) | AudioCodes Mediant devices version > 7.0 |
 | BDCOM | BDCOM | [bdcom_bdcom.yaml](/backend/config/vendors/bdcom_bdcom.yaml) | BDCOM S2200PB, S2200-B, S2500-B, S2500-C, S2500PB, S2500-P, S2900 series |
+| Brocade | FabricOS | [brocade_fabricos.yaml](/backend/config/vendors/brocade_fabricos.yaml) |  |
+| Brocade | Enhanced FabricOS | [brocade_efos.yaml](/backend/config/vendors/brocade_efos.yaml) |  |
+| Brocade | FastIron | [brocade_fastiron.yaml](/backend/config/vendors/brocade_fastiron.yaml) |  |
+| Brocade | IronWare | [brocade_ironware.yaml](/backend/config/vendors/brocade_ironware.yaml) |  |
+| Brocade | NOS (Network Operating System) | [brocade_nos.yaml](/backend/config/vendors/brocade_nos.yaml) |  |
+| Brocade | 6910 | [brocade_6910.yaml](/backend/config/vendors/brocade_6910.yaml) |  |
+| Brocade | SLX-OS | [brocade_slxos.yaml](/backend/config/vendors/brocade_slxos.yaml) |  |
 | Brocade           | Vyatta                | [brocade_vyatta.yaml](/backend/config/vendors/brocade_vyatta.yaml)               | Also used for Vyos <= 1.2.x, for newer versions use the VyOS model |
 | Casa              | Casa                  | [casa_casa.yaml](/backend/config/vendors/casa_casa.yaml)                         |                                                                    |
 | Cisco             | ACS                   | [cisco_acs.yaml](/backend/config/vendors/cisco_acs.yaml)                         |                                                                    |
