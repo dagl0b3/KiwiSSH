@@ -1,0 +1,52 @@
+### AddPack Vendor Configuration
+## Instructions for backing up AddPack devices
+
+vendor:
+  id: "addpack_addpack"
+  name: "AddPack"
+  description: "AddPack Voip, such as AP100B, AP100_G2, AP700, AP1000, AP1100F"
+
+### Session-level behavior
+session:
+  prompt: '^.*[>#]\s?$'
+  pagination:
+    enabled: true
+    patterns:
+      - pattern: '^-- [Mm]ore --$'
+        response: " "
+
+### Commands to execute for backup
+## Supported step types in command phases:
+## - command: sends command text
+## - command + then: sends command text, then sends interactive input
+commands:
+  ### Pre-backup commands (prepare the session) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  pre_backup:
+    - command: "enable"
+      then: ["{{ enable_password }}"]
+
+  ### Main backup command(s)
+  ## Commands whose output becomes the stored configuration
+  backup:
+    - command: "show running-config"
+      description: "Get running configuration"
+      show_command_in_config: true
+
+### Configuration processing rules
+## Processing reduces diff noise and trims non-config boilerplate
+processing:
+  ### Lines to strip from captured config (regex patterns)
+  strip_patterns:
+    - '^Building configuration...'
+    - '^*show running-config'
+  ### Lines that mark config boundaries
+  ## If either boundary is missing, keep from/to the file edge.
+  # config_start: "^version \\d+\\.\\d+"
+  # config_end: "^end$"
+  ### Secret masking. When enabled=false, no redaction is applied.
+  redaction:
+    enabled: false
+    # patterns:
+    #   - search: "^(snmp-server community).*"
+    #     replacement: "\\1 <configuration removed>"
