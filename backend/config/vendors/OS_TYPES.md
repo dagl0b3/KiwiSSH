@@ -23,7 +23,7 @@
 | Aruba             | IAP/Instant           | [aruba_iap.yaml](/backend/config/vendors/aruba_iap.yaml)                         | [Aruba Instant](#hpe-aruba-networking)                             |
 | Asterfusion | AsterNOS | [asterfusion_asternos.yaml](/backend/config/vendors/asterfusion_asternos.yaml) | |
 | AudioCodes | AudioCodes | [audiocodes_audiocodes.yaml](/backend/config/vendors/audiocodes_audiocodes.yaml) | AudioCodes Mediant devices version > 7.0 |
-| AudioCodes | MediaPack 
+| BDCOM | BDCOM | [bdcom_bdcom.yaml](/backend/config/vendors/bdcom_bdcom.yaml) | BDCOM S2200PB, S2200-B, S2500-B, S2500-C, S2500PB, S2500-P, S2900 series |
 | Brocade           | Vyatta                | [brocade_vyatta.yaml](/backend/config/vendors/brocade_vyatta.yaml)               | Also used for Vyos <= 1.2.x, for newer versions use the VyOS model |
 | Casa              | Casa                  | [casa_casa.yaml](/backend/config/vendors/casa_casa.yaml)                         |                                                                    |
 | Cisco             | ACS                   | [cisco_acs.yaml](/backend/config/vendors/cisco_acs.yaml)                         |                                                                    |

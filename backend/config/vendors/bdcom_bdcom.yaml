@@ -1,0 +1,63 @@
+### BDCOM Vendor Configuration
+## Instructions for backing up BDCOM devices
+
+vendor:
+  id: "bdcom_bdcom"
+  name: "BDCOM"
+  description: "BDCOM S2200PB, S2200-B, S2500-B, S2500-C, S2500PB, S2500-P, S2900 series"
+
+### Session-level behavior
+session:
+  comment_prefix: "! "
+
+### Commands to execute for backup
+## Supported step types in command phases:
+## - command: sends command text
+## - command + then: sends command text, then sends interactive input
+commands:
+  ### Pre-backup commands (prepare the session) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  pre_backup:
+    - command: "enable"
+      then: ["{{ enable_password }}"]
+    - command: "terminal length 0"
+
+  ### Main backup command(s)
+  ## Commands whose output becomes the stored configuration
+  backup:
+    - command: "show version"
+      metadata: true
+    - command: "show power-status"
+      metadata: true
+    - command: "show fan-status"
+      metadata: true
+    - command: "show running-config"
+      description: "Get running configuration"
+      show_command_in_config: true
+
+  ### Post-backup commands (cleanup) (OPTIONAL)
+  ## Command outputs aren't saved in stored configuration
+  post_backup:
+    - command: "exit"
+    - command: "exit"
+
+### Configuration processing rules
+## Processing reduces diff noise and trims non-config boilerplate
+processing:
+  ### Lines to strip from captured config (regex patterns)
+  strip_patterns:
+    - '(\s*uptime is\s*)[0-9:]'
+    - '(\s*current time:\s*)[0-9-]+\s+[0-9:]+'
+    - '(\s*at)\s+[0-9-]+\s+[0-9:]+(,\s*uptime\s+[0-9:]+)?'
+  ### Lines that mark config boundaries
+  ## If either boundary is missing, keep from/to the file edge.
+  # config_start: "^version \\d+\\.\\d+"
+  # config_end: "^end$"
+  ### Secret masking. When enabled=false, no redaction is applied.
+  redaction:
+    enabled: false
+    patterns:
+      - search: 'password \d+ (\S+).*'
+        replacement: "<secret removed>"
+      - search: 'community (\S+)'
+        replacement: '<secret removed>'
