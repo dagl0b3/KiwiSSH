@@ -5,6 +5,7 @@
 | 6WIND             | VSR                   | [6wind_vsr.yaml](/backend/config/vendors/6wind_vsr.yaml)                         |                                                                    |
 | A10 Networks      | A10 ACOS              | [a10_acos.yaml](/backend/config/vendors/a10_acos.yaml)                           |                                                                    |
 | Accedian Networks | AEN                   | [accedian_aen.yaml](/backend/config/vendors/accedian_aen.yaml)                   | Accedian Performance Elements (NIDs)                               |
+| Acme Packet       | Acme Packet           | [acmepacket_acmepacket.yaml](/backend/config/vendors/acmepacket_acmepacket.yaml)           |                                                                    |
 | Alcatel-Lucent    | AOS                   | [alcatel_aos.yaml](/backend/config/vendors/alcatel_aos.yaml)                     | AOS6 - vxworks-based                                               |
 | Alcatel-Lucent    | AOS7                  | [alcatel_aos7.yaml](/backend/config/vendors/alcatel_aos7.yaml)                   | AOS7 and AOS8 - Linux-based                                        |
 | Alcatel-Lucent    | ISAM                  | [alcatel_isam.yaml](/backend/config/vendors/alcatel_isam.yaml)                   |                                                                    |
