@@ -34,6 +34,8 @@
 | Juniper           | JunOS                 | [juniper_junos.yaml](/backend/config/vendors/juniper_junos.yaml)                 | [JunOS](#juniper-junos)                                            |
 | Mikrotik          | RouterOS              | [mikrotik_routeros.yaml](/backend/config/vendors/mikrotik_routeros.yaml)         | [RouterOS](#mikrotik-routeros)                                     |
 | Motorola          | RFS                   | [motorola_rfs.yaml](/backend/config/vendors/motorola_rfs.yaml)                   |                                                                    |
+| Extreme Networks  |  EXOS                 | [extreme_exos.yaml](/backend/config/vendors/extreme_exos.yaml)                             |                                                                    |  
+| Extreme Networks  |  VOSS                 | [extreme_voss.yaml](/backend/config/vendors/extreme_voss.yaml)                             |                                                                    |  
 | OpenWRT           |                       | [openwrt.yaml](/backend/config/vendors/openwrt.yaml)                             |                                                                    |
 | OPNsense          |                       | [opnsense.yaml](/backend/config/vendors/opnsense.yaml)                           |                                                                    |
 | Palo Alto         | PanOS                 | [paloalto_panos.yaml](/backend/config/vendors/paloalto_panos.yaml)               |                                                                    |
