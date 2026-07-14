@@ -59,27 +59,19 @@ processing:
   #   - "^\\s*RX packets:.*$"
   #   - "^\\s*TX packets:.*$"
   #   - "^\\s*RX bytes:.*$"
-
   ### Lines that mark config boundaries
   ## If either boundary is missing, keep from/to the file edge.
   # config_start: "^# unifi$"
   # config_end: "^# misc$"
-
   ### Secret masking. When enabled=false, no redaction is applied.
   redaction:
     enabled: false
-    # patterns:
-    #   - search: "^(snmp-server community).*$"
-    #     replacement: "\\1<secret redacted>"
-    #   - search: "^(snmp-server user (\\S+) (\\S+) auth (\\S+)) (\\S+) (priv) (\\S+).*$"
-    #     replacement: "\\1<secret redacted>"
-    #   - search: "^(snmp-server host.*? )\\S+( udp-port \\d+)?$"
-    #     replacement: "\\1<secret redacted>"
-    #   - search: "^(snmp-server mib community-map) \\S+ ?(.*)$"
-    #     replacement: "\\1<secret redacted>"
-    #   - search: "^(password \\d+) (\\S+)$"
-    #     replacement: "\\1<secret redacted>"
-    #   - search: "^(radius-server .*key(?: \\d+)?) \\S+$"
-    #     replacement: "\\1<secret redacted>"
-    #   - search: "^(tacacs-server .*key(?: \\d+)?) \\S+$"
-    #     replacement: "\\1<secret redacted>"
+    patterns:
+      - search: 'community (\S+) {'
+        replacement: 'community <redacted> {'
+      - search: '(ssh-(rsa|dsa|ecdsa|ecdsa-sk|ed25519|ed25519-sk) )".*; ## SECRET-DATA'
+        replacement: '<secret removed>'
+      - search: ' "\$\d\$\S+; ## SECRET-DATA'
+        replacement: ' <secret removed>'
+      - search: '((?:ftp|pasvftp|sftp|scp|https?):\/\/[^\/@"]+):[^@"]+@'
+        replacement: '\1:<secret removed>@'
