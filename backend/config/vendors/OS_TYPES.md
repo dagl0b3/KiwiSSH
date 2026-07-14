@@ -61,6 +61,11 @@
 | ComNet | Microsemi Switch | [comnet_ms.yaml](/backend/config/vendors/comnet_ms.yaml) | |
 | Comtrol | RocketLinx | [comtrol_rocketlinx.yaml](/backend/config/vendors/comtrol_rocketlinx.yaml) | |
 | Cumulus | Linux | [cumulus_linux.yaml](/backend/config/vendors/cumulus_linux.yaml) | [Cumulus Linux](#cumulus-linux) |
+| DELL | PowerConnect | [dell_powerconnect.yaml](/backend/config/vendors/dell_powerconnect.yaml) | |
+| DELL | AOSW | [aruba_aosw.yaml](/backend/config/vendors/aruba_aosw.yaml) | Same model as Aruba Wireless (AOSW) |
+| DELL | Dell X-Series | [dell_dellx.yaml](/backend/config/vendors/dell_dellx.yaml) | |
+| DELL | EMC Networking OS6 | [dell_os6.yaml](/backend/config/vendors/dell_os6.yaml) | |
+| DELL | EMC Networking OS10 | [dell_os10.yaml](/backend/config/vendors/dell_os10.yaml) | [Dell EMC Networking OS10](#dell-emc-networking-os10) |
 | D-Link            | D-Link                | [dlink_dlink.yaml](/backend/config/vendors/dlink_dlink.yaml)                     |                                                                    |
 | D-Link            | D-Link NextGen        | [dlink_dlinknextgen.yaml](/backend/config/vendors/dlink_dlinknextgen.yaml)       | Cisco-like CLI                                                     |
 | Eltex             | Eltex                 | [eltex_eltex.yaml](/backend/config/vendors/eltex_eltex.yaml)                     |                                                                    |
@@ -131,6 +136,27 @@ Comment out the inappropriate commands in the [cumulus_linux.yaml](/backend/conf
 > [!NOTE]
 > The default command set for the Cumulus Linux Vendor file is `frr` and `NCLU`.
 
+## Dell EMC Networking OS10
+
+Disable banner/motd
+
+```text
+banner login disable
+banner motd disable
+```
+
+Add allowed commands to privilege level 4
+
+```text
+privilege exec priv-lvl 4 "show inventory"
+privilege exec priv-lvl 4 "show inventory media"
+privilege exec priv-lvl 4 "show running-configuration"
+```
+
+Create the user will the role sysadmin (it will see the full config, including auth info and users) and the privilege level 4
+
+```text
+username kiwissh password verysecurepassword role sysadmin priv-lvl 4
 ```
 
 ## Fortinet device types
