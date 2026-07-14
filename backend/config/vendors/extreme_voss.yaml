@@ -9,7 +9,7 @@ vendor:
 ### Session-level behavior
 session:
   comment_prefix: "#"
-  prompt: '^([\w.:@()-]+[#>]\s?)$'
+  prompt: '^([\w.@()-]+\s*[#>]\s*)$'
 
 ### Commands to execute for backup
 ## Supported step types in command phases:
@@ -47,13 +47,10 @@ processing:
   ### Lines to strip from captured config (regex patterns)
   strip_patterns:
     - "(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\\s(0?[1-9]|[12][0-9]|3[01])\\s([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]\\s\\d{4}\\s[A-Z]{2,5}$"
-
-
   ### Lines that mark config boundaries
   ## If either boundary is missing, keep from/to the file edge.
   # config_start: "^version \\d+\\.\\d+"
   # config_end: "^end$"
-
   ### Secret masking. When enabled=false, no redaction is applied.
   redaction:
     enabled: false
