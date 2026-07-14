@@ -70,12 +70,12 @@ The frontend offers:
 
 The backend provides:
 
-- SSH/Telnet connectivity to network devices for configuration backup
+- SSH/Telnet connectivity to any kind devices for configuration backup
 - Configurable backup schedules with cron expressions on global, group and device level
 - Local git repositories for each device group to store configuration history and provide diff view
 - Optional remote git repository support to push configuration changes to a central Git server (e.g. GitHub, GitLab, Gitea, etc.)
-- Support for loading device lists from CSV files or PostgreSQL databases
-- Configurable SSH/Telnet options and backup commands per vendor, group and device
+- Support for loading device lists from CSV or Ansible inventory files, PostgreSQL databases or HTTP APIs
+- Configurable SSH/Telnet options and backup commands per vendor, group and device, making it flexible to support a wide range of devices
 - Configurable processing rules for captured configurations, including line stripping, cropping and regex-based redaction of sensitive information
 - The ability to easily add support for new vendors by creating YAML configuration files that define how to interact with the device CLI and process the output
 - RESTful API endpoints for device management, backup job logs and configuration retrieval to enable integration with other tools and automation
